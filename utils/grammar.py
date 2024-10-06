@@ -1,4 +1,4 @@
-from .token import TokenType
+from utils.token import TokenType
 
 
 KEYWORD_SET = {

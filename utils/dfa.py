@@ -1,4 +1,7 @@
-from .token import Token
+import logging
+from utils.token import Token, TokenType
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleAutomata:
@@ -97,8 +100,21 @@ class SimpleAutomata:
         - Token: A token object based on the current state.
         """
         match = self.matched
-        self.matched = ""
-        return Token(self.paths()["DONE"], match)
+        res = Token(self.paths()["DONE"], match)
+        self.reset()
+        return res
+
+    def do_error(self) -> Token:
+        """
+        Return an error token based on the current state.
+
+        Returns:
+        - Token: A token object wrapping around an error.
+        """
+        match = self.matched
+        res = Token(TokenType.ERROR, match)
+        self.reset()
+        return res
 
     def reset(self) -> None:
         """
@@ -129,15 +145,18 @@ class SimpleAutomata:
         if char in self.paths():
             self.matched += char
             self.current = self.paths()[char]
-            print(f"Consumed '{char}' and moving to state '{self.current}'")
+            logger.info(f"Consumed '{char}' and moving to state "
+                        "'{self.current}'")
         elif "LETTER" in self.paths() and SimpleAutomata.is_letter(char):
             self.matched += char
             self.current = self.paths()["LETTER"]
-            print(f"Consumed '{char}' and moving to state '{self.current}'")
+            logger.info(f"Consumed '{char}' and moving to state "
+                        "'{self.current}'")
         elif "DIGIT" in self.paths() and SimpleAutomata.is_digit(char):
             self.matched += char
             self.current = self.paths()["DIGIT"]
-            print(f"Consumed '{char}' and moving to state '{self.current}'")
+            logger.info(f"Consumed '{char}' and moving to state "
+                        "'{self.current}'")
         else:
             raise ValueError(
                 f"No paths to move for state {self.current} and char {char}")

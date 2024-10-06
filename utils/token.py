@@ -23,6 +23,8 @@ class TokenType(Enum):
     INTEGER = auto()
     FLOAT = auto()
 
+    ERROR = auto()
+
 
 class Token:
     def __init__(self, t: TokenType, s: str = "") -> None:
@@ -44,6 +46,9 @@ class Token:
         str: A string representation of the Token object.
         """
         return f"<{self.type}, '{self.string}'>"
+
+    def __eq__(self, o) -> bool:
+        return self.type == o.type and self.string == o.string
 
     def append(self, c) -> None:
         self.string += c

@@ -1,13 +1,19 @@
-from .token import Token
-from .dfa import SimpleAutomata
+import logging
+from typing import Optional
+from utils.token import Token
+from utils.dfa import SimpleAutomata
+
+logger = logging.getLogger(__name__)
 
 
 class TokenStream:
-    def __init__(self) -> None:
+    def __init__(self, init: Optional[list[Token]] = None) -> None:
         """
         Initialize a TokenStream object with an empty list of tokens.
         """
-        self.tokens: list[Token] = []
+        self.tokens = []
+        if init:
+            self.tokens: list[Token] = init
 
     def __str__(self) -> str:
         """
@@ -20,6 +26,14 @@ class TokenStream:
         for token in self.tokens:
             res += f"\t{str(token)}\n"
         return res
+
+    def __eq__(self, o) -> bool:
+        return all(
+            [
+                self.tokens[i] == o.tokens[i]
+                for i in range(0, len(self.tokens))
+            ]
+        )
 
     def append(self, t: Token) -> None:
         """
@@ -55,8 +69,6 @@ class Lexer:
         string.
         """
         self.pos += 1
-        if self.pos >= self.max:
-            raise IndexError(f"Reached end of input at pos {self.max}")
 
     def current(self) -> str:
         """
@@ -94,21 +106,19 @@ class Lexer:
         res = TokenStream()
         while not self.done():
             c = self.current()
-            print(f"Received char '{c}")
+            logger.debug(f"Received char '{c}'")
             try:
                 self.dfa.step(c)
             except ValueError as e:
                 if self.dfa.can_return():
                     res.append(self.dfa.do_return())
+                    continue
                 else:
-                    raise e
-                self.dfa.reset()
-                continue
-            try:
-                self.step()
-            except IndexError:
-                if self.dfa.can_return():
-                    res.append(self.dfa.do_return())
-                return res
+                    logger.warning(e)
+                    res.append(self.dfa.do_error())
+            self.step()
+        # Final token gets stuck in the pipeline, oops
+        if self.dfa.can_return():
+            res.append(self.dfa.do_return())
 
-        return TokenStream()
+        return res
