@@ -1,6 +1,7 @@
+import argparse
 import logging
-from typing import Optional
-from utils.token import Token
+from typing import Callable, Optional
+from utils.token import Token, TokenType
 from utils.dfa import SimpleAutomata
 
 logger = logging.getLogger(__name__)
@@ -57,10 +58,14 @@ class TokenStream:
         """
         self.tokens += [t]
 
+    def filter(self, f: Callable[[Token], bool]) -> None:
+        self.tokens = [t for t in self.tokens if f(t)]
+
 
 class Lexer:
 
-    def __init__(self, input: str, dfa: SimpleAutomata) -> None:
+    def __init__(self, input: str, dfa: SimpleAutomata,
+                 options: argparse.Namespace) -> None:
         """
         Initialize a Lexer object with the input string, position, and maximum
         length.
@@ -72,6 +77,9 @@ class Lexer:
         self.pos = 0
         self.max = len(input)
         self.dfa = dfa
+        self.options = argparse.Namespace()
+        if options:
+            self.options = options
 
     def step(self) -> None:
         """
@@ -134,4 +142,6 @@ class Lexer:
         if self.dfa.can_return():
             res.append(self.dfa.do_return())
 
+        if not self.options.whitespace:
+            res.filter(lambda t: t.type != TokenType.WHITE_SPACE)
         return res

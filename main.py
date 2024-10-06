@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from utils import lexer, grammar, dfa
-from argparse import ArgumentParser
+from argparse import ArgumentParser, BooleanOptionalAction
 import logging
 import sys
 
@@ -41,6 +41,7 @@ def arg_parser() -> ArgumentParser:
     parser.add_argument("text", help="Input to the compiler.")
     parser.add_argument('-v', '--verbose', action='count', default=0,
                         help="Increase verbosity (can be used multiple times)")
+    parser.add_argument("--whitespace", action=BooleanOptionalAction)
     return parser
 
 
@@ -48,7 +49,7 @@ def main() -> int:
     args = arg_parser().parse_args()
     setup_logger(args.verbose)
     g = grammar.STATE_TABLE
-    result = lexer.Lexer(args.text, dfa.SimpleAutomata(g))
+    result = lexer.Lexer(args.text, dfa.SimpleAutomata(g), args)
     print(result.lex())
     return 0
 
