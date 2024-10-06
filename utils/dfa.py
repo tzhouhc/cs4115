@@ -157,6 +157,16 @@ class SimpleAutomata:
             self.current = self.paths()["DIGIT"]
             logger.info(f"Consumed '{char}' and moving to state "
                         f"'{self.current}'")
+        elif "ANYTHING_BUT_QUOTE" in self.paths() and char != "\"":
+            self.matched += char
+            self.current = self.paths()["ANYTHING_BUT_QUOTE"]
+            logger.info(f"Consumed '{char}' and moving to state "
+                        f"'{self.current}'")
+        elif "ANYTHING" in self.paths():
+            self.matched += char
+            self.current = self.paths()["ANYTHING"]
+            logger.info(f"Consumed '{char}' and moving to state "
+                        f"'{self.current}'")
         else:
             raise ValueError(
                 f"No paths to move for state {self.current} and char {char}")

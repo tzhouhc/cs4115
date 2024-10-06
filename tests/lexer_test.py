@@ -36,6 +36,18 @@ class TestLexer(unittest.TestCase):
                                Token(TokenType.ID, "world"),
                            ])))
 
+    def test_hello_world_str(self):
+        self.run_test_case("hello world string",
+                           TestCase("\"hello world\"", lexer.TokenStream([
+                               Token(TokenType.STRING, "\"hello world\""),
+                           ])))
+
+    def test_str_with_escape(self):
+        self.run_test_case("str with escape",
+                           TestCase("\"some\\\" stuff\"", lexer.TokenStream([
+                               Token(TokenType.STRING, "\"some\\\" stuff\""),
+                           ])))
+
     def test_space(self):
         self.run_test_case("space", TestCase(" ", lexer.TokenStream(
             [Token(TokenType.WHITE_SPACE, ' ')])))

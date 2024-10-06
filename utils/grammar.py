@@ -39,6 +39,7 @@ STATE_TABLE = {
               "f": "for_func_f", "e": "end_else_e",
               "r": "return_r",
               "w": "while_w",
+              "\"": "string",
               "LETTER": "id",
               "DIGIT": "num",
               },
@@ -98,4 +99,8 @@ STATE_TABLE = {
 
     "id": {"LETTER": "id", "DIGIT": "id", "_": "id", "DONE": TokenType.ID},
     "num": {"DIGIT": "num", "DONE": TokenType.INTEGER},
+    "string": {"ANYTHING_BUT_QUOTE": "string", "\"": "string_done", "\\":
+               "string_escape"},
+    "string_escape": {"ANYTHING": "string"},
+    "string_done": {"DONE": TokenType.STRING},
 }

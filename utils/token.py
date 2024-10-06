@@ -25,6 +25,7 @@ class TokenType(Enum):
     COMMA = auto()
     INTEGER = auto()
     FLOAT = auto()
+    STRING = auto()
 
     ERROR = auto()
 
