@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from utils import lexer
+from utils import lexer, grammar, dfa
 from argparse import ArgumentParser
 
 
@@ -11,7 +11,8 @@ def arg_parser() -> ArgumentParser:
 
 def main() -> int:
     args = arg_parser().parse_args()
-    result = lexer.Lexer(args.text)
+    g = grammar.STATE_TABLE
+    result = lexer.Lexer(args.text, dfa.SimpleAutomata(g))
     print(result.lex())
     return 0
 
