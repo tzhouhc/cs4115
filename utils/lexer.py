@@ -27,6 +27,19 @@ class TokenStream:
             res += f"\t{str(token)}\n"
         return res
 
+    def __repr__(self) -> str:
+        """
+        Return a string recreation of the TokenStream object.
+
+        Returns:
+        str: A string recreation of the TokenStream object.
+        """
+        res = "TokenStream([\n"
+        for token in self.tokens:
+            res += f"\t{repr(token)},\n"
+        res += "])"
+        return res
+
     def __eq__(self, o) -> bool:
         return all(
             [

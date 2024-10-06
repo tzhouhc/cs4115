@@ -7,6 +7,9 @@ class TokenType(Enum):
     RPAREN = auto()  # )
     LBRACKET = auto()  # [
     RBRACKET = auto()  # ]
+    LCURLY = auto()  # {
+    RCURLY = auto()  # }
+    COLON = auto()  # :
     KEYWORD = auto()
     # The following are reserved as keywords:
     # and       break     do        else      elseif    end
@@ -46,6 +49,15 @@ class Token:
         str: A string representation of the Token object.
         """
         return f"<{self.type}, '{self.string}'>"
+
+    def __repr__(self) -> str:
+        """
+        Return a string recreation of the Token object.
+
+        Returns:
+        str: A string recreation of the Token object.
+        """
+        return f"Token({self.type}, '{self.string}')"
 
     def __eq__(self, o) -> bool:
         return self.type == o.type and self.string == o.string
