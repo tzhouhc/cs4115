@@ -146,17 +146,17 @@ class SimpleAutomata:
             self.matched += char
             self.current = self.paths()[char]
             logger.info(f"Consumed '{char}' and moving to state "
-                        "'{self.current}'")
+                        f"'{self.current}'")
         elif "LETTER" in self.paths() and SimpleAutomata.is_letter(char):
             self.matched += char
             self.current = self.paths()["LETTER"]
             logger.info(f"Consumed '{char}' and moving to state "
-                        "'{self.current}'")
+                        f"'{self.current}'")
         elif "DIGIT" in self.paths() and SimpleAutomata.is_digit(char):
             self.matched += char
             self.current = self.paths()["DIGIT"]
             logger.info(f"Consumed '{char}' and moving to state "
-                        "'{self.current}'")
+                        f"'{self.current}'")
         else:
             raise ValueError(
                 f"No paths to move for state {self.current} and char {char}")

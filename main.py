@@ -2,6 +2,7 @@
 from utils import lexer, grammar, dfa
 from argparse import ArgumentParser
 import logging
+import sys
 
 
 def setup_logger(verbosity):
@@ -19,12 +20,12 @@ def setup_logger(verbosity):
     logger.setLevel(level)
 
     # Create a console handler and set its level
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(sys.stderr)
     ch.setLevel(level)
 
     # Create a formatter
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        '%(name)s@%(levelname)s: %(message)s')
 
     # Add formatter to ch
     ch.setFormatter(formatter)
@@ -45,6 +46,7 @@ def arg_parser() -> ArgumentParser:
 
 def main() -> int:
     args = arg_parser().parse_args()
+    setup_logger(args.verbose)
     g = grammar.STATE_TABLE
     result = lexer.Lexer(args.text, dfa.SimpleAutomata(g))
     print(result.lex())

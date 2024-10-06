@@ -114,7 +114,7 @@ class Lexer:
                     res.append(self.dfa.do_return())
                     continue
                 else:
-                    logger.warning(e)
+                    logger.debug(e)
                     res.append(self.dfa.do_error())
             self.step()
         # Final token gets stuck in the pipeline, oops
