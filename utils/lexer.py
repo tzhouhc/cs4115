@@ -62,10 +62,16 @@ class TokenStream:
         self.tokens = [t for t in self.tokens if f(t)]
 
 
+class LexerOptions(argparse.Namespace):
+
+    def __init__(self):
+        self.whitespace = True
+
+
 class Lexer:
 
     def __init__(self, input: str, dfa: SimpleAutomata,
-                 options: argparse.Namespace) -> None:
+                 options: Optional[LexerOptions] = None) -> None:
         """
         Initialize a Lexer object with the input string, position, and maximum
         length.
@@ -77,7 +83,7 @@ class Lexer:
         self.pos = 0
         self.max = len(input)
         self.dfa = dfa
-        self.options = argparse.Namespace()
+        self.options = LexerOptions()
         if options:
             self.options = options
 

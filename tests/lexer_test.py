@@ -36,6 +36,20 @@ class TestLexer(unittest.TestCase):
                                Token(TokenType.ID, "world"),
                            ])))
 
+    def test_ambiguity(self):
+        self.run_test_case("ambiguity",
+                           TestCase("for fora fo fun func", lexer.TokenStream([
+                               Token(TokenType.KEYWORD, "for"),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ID, "fora"),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ID, "fo"),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ID, "fun"),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.KEYWORD, "func"),
+                           ])))
+
     def test_hello_world_str(self):
         self.run_test_case("hello world string",
                            TestCase("\"hello world\"", lexer.TokenStream([
