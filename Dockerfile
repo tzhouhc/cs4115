@@ -8,9 +8,9 @@ COPY utils ./utils
 COPY tests ./tests
 COPY __init__.py ./
 COPY main.py ./
-COPY ./run_assignment_1.sh ./
+COPY ./run_basic_demo.sh ./
 
 RUN useradd app
 USER app
 
-CMD ["./run_assignment_1.sh"]
+CMD ["./run_basic_demo.sh"]

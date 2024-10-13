@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 
-INPUT_STRING="hello (world) 123"
+cd "$(dirname "$0")"
 
-echo "Running lexer on ${INPUT_STRING}"
-python3 main.py -vv "${INPUT_STRING}"
-
-
-echo "Running unit tests (tests/lexer_test.py)"
-python3 -m unittest tests/lexer_test.py
+docker build -t cs4115 .
+docker run cs4115

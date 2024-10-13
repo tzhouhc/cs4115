@@ -42,37 +42,37 @@ in the result token stream.
 
 ## How to Run
 
-Either run the program directly:
+Either run the program directly if python is available:
 
 ```sh
 ./main.py "some input text"
 ```
 
-Or run the provided shell script
+or run the demo script:
+
+```sh
+./run_basic_demo.sh
+```
+
+Or run the provided shell script to install and run docker:
 
 ```sh
 ./run_assignment_1.sh
 ```
 
-Or using the dockerfile:
-
-```sh
-docker build -t cs4115 .
-docker run cs4115
-
-```
-
-For state transition logging, run `main.py` with flags `-vv`.
+For state transition logging, run `main.py` with flags `-v`; use `-vv` for
+more verbose logging.
 
 ## Tests
 
-You can find the tests in `tests/lexer_test.py`. You can run it with:
+You can find the tests in `tests/lexer_test.py`. You can run them with:
 
 ```sh
 python3 -m unittest tests/lexer_test.py
 ```
 
-Or use the provided commands in the justfile.
+Or use the provided commands in the justfile. The tests are also run as part of
+the provided `run_assignment_1.sh`.
 
 ## Team
 
