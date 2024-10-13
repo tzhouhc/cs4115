@@ -133,9 +133,9 @@ class Lexer:
         res = TokenStream()
         while not self.done():
             c = self.current()
-            logger.debug(f"Received char '{c}'")
             try:
                 self.dfa.step(c)
+                logger.debug(f"Received char '{c}'")
             except ValueError as e:
                 if self.dfa.can_return():
                     res.append(self.dfa.do_return())

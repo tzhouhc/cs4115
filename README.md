@@ -54,6 +54,14 @@ Or run the provided shell script
 ./run_assignment_1.sh
 ```
 
+Or using the dockerfile:
+
+```sh
+docker build -t cs4115 .
+docker run cs4115
+
+```
+
 For state transition logging, run `main.py` with flags `-vv`.
 
 ## Tests
