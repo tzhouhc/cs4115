@@ -62,6 +62,31 @@ class TestLexer(unittest.TestCase):
                                Token(TokenType.STRING, "\"some\\\" stuff\""),
                            ])))
 
+    def test_bad_tokens(self):
+        self.run_test_case("bad_tokens",
+                           TestCase(". . * * ", lexer.TokenStream([
+                               Token(TokenType.ERROR, "."),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ERROR, "."),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ERROR, "*"),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ERROR, "*"),
+                               Token(TokenType.WHITE_SPACE, " "),
+                           ])))
+
+    def test_bad_tokens_2(self):
+        self.run_test_case("bad tokens 2",
+                           TestCase(". . * *", lexer.TokenStream([
+                               Token(TokenType.ERROR, "."),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ERROR, "."),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ERROR, "*"),
+                               Token(TokenType.WHITE_SPACE, " "),
+                               Token(TokenType.ERROR, "*"),
+                           ])))
+
     def test_space(self):
         self.run_test_case("space", TestCase(" ", lexer.TokenStream(
             [Token(TokenType.WHITE_SPACE, ' ')])))
@@ -133,7 +158,7 @@ class TestLexer(unittest.TestCase):
             "parens with error", TestCase("((.))", lexer.TokenStream([
                 Token(TokenType.LPAREN, "("),
                 Token(TokenType.LPAREN, "("),
-                Token(TokenType.ERROR, ""),
+                Token(TokenType.ERROR, "."),
                 Token(TokenType.RPAREN, ")"),
                 Token(TokenType.RPAREN, ")"),
             ])))

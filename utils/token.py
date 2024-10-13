@@ -2,7 +2,8 @@ from enum import Enum, auto
 
 
 class TokenType(Enum):
-    WHITE_SPACE = 0  # \s
+    EOL = 0  # special case for e.g. empty string
+    WHITE_SPACE = auto()  # \s
     LPAREN = auto()  # (
     RPAREN = auto()  # )
     LBRACKET = auto()  # [
@@ -33,11 +34,15 @@ class TokenType(Enum):
 class Token:
     def __init__(self, t: TokenType, s: str = "") -> None:
         """
-        Initialize a Token object with a TokenType and a string value.
+        Initialize a Token object with the given TokenType and optional string.
 
         Parameters:
         t (TokenType): The type of the token.
-        s (str): The string value of the token.
+        s (str): The string associated with the token. Default is an empty
+        string.
+
+        Returns:
+        None
         """
         self.type = t
         self.string = s
@@ -53,15 +58,34 @@ class Token:
 
     def __repr__(self) -> str:
         """
-        Return a string recreation of the Token object.
+        Return a string representation of the Token object for debugging.
 
         Returns:
-        str: A string recreation of the Token object.
+        str: A string representation of the Token object.
         """
         return f"Token({self.type}, '{self.string}')"
 
     def __eq__(self, o) -> bool:
-        return self.type == o.type and self.string == o.string
+        """
+        Check if two Token objects are equal.
 
-    def append(self, c) -> None:
+        Parameters:
+        o (Token): The other Token object to compare.
+
+        Returns:
+        bool: True if the two Token objects are equal, False otherwise.
+        """
+        return isinstance(o, Token) and \
+            self.type == o.type and self.string == o.string
+
+    def append(self, c: str) -> None:
+        """
+        Append a character to the string associated with the Token object.
+
+        Parameters:
+        c (str): The character to append to the string.
+
+        Returns:
+        None
+        """
         self.string += c
