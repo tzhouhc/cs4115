@@ -28,6 +28,12 @@ class TestLexer(unittest.TestCase):
     def test_empty_string(self):
         self.run_test_case("empty_string", TestCase("", lexer.TokenStream()))
 
+    def test_whitespace_string(self):
+        self.run_test_case("whitespace string",
+                           TestCase("   ", lexer.TokenStream([
+                               Token(TokenType.WHITE_SPACE, "   "),
+                           ])))
+
     def test_hello_world(self):
         self.run_test_case("hello world",
                            TestCase("hello world", lexer.TokenStream([
@@ -158,6 +164,18 @@ class TestLexer(unittest.TestCase):
             "parens with error", TestCase("((.))", lexer.TokenStream([
                 Token(TokenType.LPAREN, "("),
                 Token(TokenType.LPAREN, "("),
+                Token(TokenType.ERROR, "."),
+                Token(TokenType.RPAREN, ")"),
+                Token(TokenType.RPAREN, ")"),
+            ])))
+
+    def test_parens_with_error_2(self):
+        self.run_test_case(
+            "parens with error 2", TestCase("((.123.))", lexer.TokenStream([
+                Token(TokenType.LPAREN, "("),
+                Token(TokenType.LPAREN, "("),
+                Token(TokenType.ERROR, "."),
+                Token(TokenType.INTEGER, '123'),
                 Token(TokenType.ERROR, "."),
                 Token(TokenType.RPAREN, ")"),
                 Token(TokenType.RPAREN, ")"),
