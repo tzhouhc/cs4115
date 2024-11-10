@@ -521,8 +521,9 @@ class Parser:
                 if match:
                     forward += match.forward
                     assert match.node is not None
-                    saved_nodes.append(match.node)
                     got_match = True
+                    if (match.node.type != "EPSILON"):
+                        saved_nodes.append(match.node)
 
             if not got_match:
                 # Nope, found nothing useful. Tell caller to try something
