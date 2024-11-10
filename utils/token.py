@@ -29,6 +29,7 @@ class TokenType(Enum):
     STRING = auto()
 
     ERROR = auto()
+    EOF = auto()
 
 
 VARIABLE_TOKENS = [

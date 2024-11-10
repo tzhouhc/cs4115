@@ -62,9 +62,9 @@ class ASTRule:
 
 class ASTNode:
     def __init__(self,
-                 type: RuleElement, token: Optional[Token],
+                 e: RuleElement, token: Optional[Token],
                  nodes: list['ASTNode']) -> None:
-        self.type = type
+        self.type = rule_element_name(e)
         self.token = token
         self.nodes = nodes
         self.parent = None
@@ -115,7 +115,6 @@ class Parser:
     def __init__(self, tokens: TokenStream,
                  syntax: dict[str, list[list[Union[str, Token]]]]) -> None:
         self.tokens = tokens
-        self.length = len(tokens)
         self.syntax: dict[str, list[ASTRule]] = {
             key: [ASTRule(key, rule) for rule in item]
             for key, item in syntax.items()
@@ -144,7 +143,7 @@ class Parser:
     def match_terminal(self, cur: int, entry: Token) -> ASTMatchResult:
         # no more symbols to match, entry is known not to be epsilon,
         # fail gracefully
-        if cur >= self.length:
+        if cur >= len(self.tokens):
             return ASTMatchResult(False, 0, None)
         cur_entity = self.get_at(cur)
         # some tokens must match explicitly, e.g. keywords, symbols; others
@@ -178,6 +177,7 @@ class Parser:
         # can start correctly.
 
         # special case epsilon -- one entry in the rule only and it is epsilon
+        print(f"entries are {entries}")
         if rule[0] == "EPSILON" and len(rule) == 1:
             return ASTMatchResult(True, 0, ASTNode("EPSILON", None, []))
 
@@ -185,13 +185,16 @@ class Parser:
             entry: Union[str, Token] = entries[i]
             got_match = False
             if isinstance(entry, Token):
+                print(f"trying to match token {entry}")
                 match = self.match_terminal(cur + forward, entry)
                 if match:
-                    forward += match.forward
                     node = match.node
                     assert node is not None
-                    result_node.nodes += [node]
                     got_match = True
+                    print(f"adding node {node} with type {node.type}")
+                    if (node.type != "TokenType.EOF"):
+                        forward += match.forward
+                        result_node.nodes += [node]
             else:
                 match: ASTMatchResult = ASTMatchResult(False, 0, None)
                 # non-terminal, can have multiple rules, match any of them.
@@ -211,14 +214,19 @@ class Parser:
             if not got_match:
                 return ASTMatchResult(False, 0, None)
 
+        print(f"matched {result_node}")
         return ASTMatchResult(
             True, forward, result_node
         )
 
     def parse(self, init_name: str = "BLOCK") -> ASTMatchResult:
-        init = self.syntax[init_name][0]  # BLOCK has only one production rule.
+        init: ASTRule = self.syntax[init_name][0]
+        # hack to ensure that must match an EOF at the end to succeed
+        eof = Token(TokenType.EOF, "")
+        if init[-1] != eof:
+            init.entries += [eof]
+        if self.tokens[-1] != eof:
+            self.tokens.append(eof)
         current = 0
         match = self.match_rule_starting_at(current, init)
-        if match.forward != len(self.tokens):
-            match.match = False
         return match
