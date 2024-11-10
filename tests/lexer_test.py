@@ -70,27 +70,27 @@ class TestLexer(unittest.TestCase):
 
     def test_bad_tokens(self):
         self.run_test_case("bad_tokens",
-                           TestCase(". . * * ", lexer.TokenStream([
-                               Token(TokenType.ERROR, "."),
+                           TestCase("@ @ * * ", lexer.TokenStream([
+                               Token(TokenType.ERROR, "@"),
                                Token(TokenType.WHITE_SPACE, " "),
-                               Token(TokenType.ERROR, "."),
+                               Token(TokenType.ERROR, "@"),
                                Token(TokenType.WHITE_SPACE, " "),
-                               Token(TokenType.ERROR, "*"),
+                               Token(TokenType.OP, "*"),
                                Token(TokenType.WHITE_SPACE, " "),
-                               Token(TokenType.ERROR, "*"),
+                               Token(TokenType.OP, "*"),
                                Token(TokenType.WHITE_SPACE, " "),
                            ])))
 
     def test_bad_tokens_2(self):
         self.run_test_case("bad tokens 2",
-                           TestCase(". . * *", lexer.TokenStream([
-                               Token(TokenType.ERROR, "."),
+                           TestCase("@ @ * *", lexer.TokenStream([
+                               Token(TokenType.ERROR, "@"),
                                Token(TokenType.WHITE_SPACE, " "),
-                               Token(TokenType.ERROR, "."),
+                               Token(TokenType.ERROR, "@"),
                                Token(TokenType.WHITE_SPACE, " "),
-                               Token(TokenType.ERROR, "*"),
+                               Token(TokenType.OP, "*"),
                                Token(TokenType.WHITE_SPACE, " "),
-                               Token(TokenType.ERROR, "*"),
+                               Token(TokenType.OP, "*"),
                            ])))
 
     def test_space(self):
@@ -161,22 +161,22 @@ class TestLexer(unittest.TestCase):
 
     def test_parens_with_error(self):
         self.run_test_case(
-            "parens with error", TestCase("((.))", lexer.TokenStream([
+            "parens with error", TestCase("((@))", lexer.TokenStream([
                 Token(TokenType.LPAREN, "("),
                 Token(TokenType.LPAREN, "("),
-                Token(TokenType.ERROR, "."),
+                Token(TokenType.ERROR, "@"),
                 Token(TokenType.RPAREN, ")"),
                 Token(TokenType.RPAREN, ")"),
             ])))
 
     def test_parens_with_error_2(self):
         self.run_test_case(
-            "parens with error 2", TestCase("((.123.))", lexer.TokenStream([
+            "parens with error 2", TestCase("((@123@))", lexer.TokenStream([
                 Token(TokenType.LPAREN, "("),
                 Token(TokenType.LPAREN, "("),
-                Token(TokenType.ERROR, "."),
+                Token(TokenType.ERROR, "@"),
                 Token(TokenType.INTEGER, '123'),
-                Token(TokenType.ERROR, "."),
+                Token(TokenType.ERROR, "@"),
                 Token(TokenType.RPAREN, ")"),
                 Token(TokenType.RPAREN, ")"),
             ])))
