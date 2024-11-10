@@ -4,3 +4,6 @@ install-py-reqs:
 
 run-lexer-tests:
   python3 -m unittest tests/lexer_test.py
+
+run-parser-tests:
+  python3 -m unittest tests/parser_test.py

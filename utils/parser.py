@@ -32,6 +32,15 @@ SYNTAX_MAP = {
     ]
 }
 
+RuleElement = Union[str, Token]
+
+
+def rule_element_name(e: RuleElement):
+    if isinstance(e, str):
+        return e
+    else:
+        return str(e.type)
+
 
 class ASTRule:
     def __init__(self, name: str, entries: list[Union[str, Token]]):
@@ -44,12 +53,26 @@ class ASTRule:
 
 class ASTNode:
     def __init__(self,
-                 type: Union[str, TokenType], token: Optional[Token],
+                 type: RuleElement, token: Optional[Token],
                  nodes: list['ASTNode']) -> None:
         self.type = type
         self.token = token
         self.nodes = nodes
         self.parent = None
+
+    def __str__(self) -> str:
+        result = f"{self.type}"
+        if self.token:
+            result += f"({self.token.string})"
+        if self.nodes:
+            children = ", ".join(str(node) for node in self.nodes)
+            result += f"[{children}]"
+        return result
+
+    def __repr__(self) -> str:
+        return (f"ASTNode(type={repr(self.type)}, "
+                f"token={repr(self.token)}, "
+                f"nodes={repr(self.nodes)})")
 
 
 class ASTMatchResult:
@@ -62,14 +85,22 @@ class ASTMatchResult:
     def __bool__(self):
         return self.match
 
+    def __str__(self):
+        return str(self.node)
+
+    def __repr__(self):
+        return f"ASTMatchResult(match={self.match}, " \
+            f"forward={self.forward}, node={repr(self.node)})"
+
 
 # Recursive Descent
 class Parser:
-    def __init__(self, tokens: TokenStream) -> None:
+    def __init__(self, tokens: TokenStream,
+                 syntax: dict[str, list[list[Union[str, Token]]]]) -> None:
         self.tokens = tokens
         self.syntax: dict[str, list[ASTRule]] = {
             key: [ASTRule(key, rule) for rule in item]
-            for key, item in SYNTAX_MAP.items()
+            for key, item in syntax.items()
         }
 
     def __str__(self) -> str:
@@ -96,7 +127,8 @@ class Parser:
         if cur_entity == entry or (cur_entity.type == entry.type
                                    and entry.type in VARIABLE_TOKENS):
             return ASTMatchResult(True,
-                                  1, ASTNode(cur_entity.type, cur_entity, []))
+                                  1, ASTNode(rule_element_name(entry),
+                                             cur_entity, []))
         return ASTMatchResult(False, 0, None)
 
         # A *specific* rule matching attempt
@@ -148,10 +180,7 @@ class Parser:
             True, forward, result_node
         )
 
-    def parse(self) -> Optional[ASTNode]:
-        init = self.syntax["BLOCK"][0]  # BLOCK has only one production rule.
+    def parse(self, init_name: str = "BLOCK") -> ASTMatchResult:
+        init = self.syntax[init_name][0]  # BLOCK has only one production rule.
         current = 0
-        match = self.match_rule_starting_at(current, init)
-        if match and match.forward == len(self.tokens):
-            return match.node
-        return None
+        return self.match_rule_starting_at(current, init)

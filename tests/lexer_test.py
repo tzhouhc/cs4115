@@ -181,5 +181,6 @@ class TestLexer(unittest.TestCase):
                 Token(TokenType.RPAREN, ")"),
             ])))
 
-        if __name__ == '__main__':
-            unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
