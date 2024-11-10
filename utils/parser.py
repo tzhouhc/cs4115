@@ -1,8 +1,11 @@
+import logging
+from functools import cache
 from utils.lexer import TokenStream
 from utils.token import Token, TokenType, VARIABLE_TOKENS
 
 from typing import Optional, Union
 
+logger = logging.getLogger(__name__)
 
 # The lua syntax essentials (abridged version for the sake of homework)
 SYNTAX_MAP = {
@@ -46,6 +49,12 @@ class ASTRule:
     def __init__(self, name: str, entries: list[Union[str, Token]]):
         self.name = name
         self.entries = entries
+
+    def __getitem__(self, i: int) -> RuleElement:
+        return self.entries[i]
+
+    def __len__(self) -> int:
+        return len(self.entries)
 
     def __str__(self) -> str:
         return f"{self.name} -> " + " ".join([str(e) for e in self.entries])
@@ -93,11 +102,20 @@ class ASTMatchResult:
             f"forward={self.forward}, node={repr(self.node)})"
 
 
+class ASTMatchSet:
+    def __init__(self, matches: list[ASTMatchResult]) -> None:
+        self.matches = matches
+
+    def __iter__(self):
+        return iter(self.matches)
+
+
 # Recursive Descent
 class Parser:
     def __init__(self, tokens: TokenStream,
                  syntax: dict[str, list[list[Union[str, Token]]]]) -> None:
         self.tokens = tokens
+        self.length = len(tokens)
         self.syntax: dict[str, list[ASTRule]] = {
             key: [ASTRule(key, rule) for rule in item]
             for key, item in syntax.items()
@@ -110,9 +128,11 @@ class Parser:
                 res += str(rule) + "\n"
         return res
 
+    @cache
     def get_at(self, index: int) -> Token:
         return self.tokens[index]
 
+    @cache
     def token_match_at(self, i: int, want: Token) -> bool:
         if not isinstance(self.get_at(i), Token):
             return False
@@ -120,7 +140,12 @@ class Parser:
 
     # A terminal match is either a literal match -- type and content both equal
     # -- or a variable match, where type is equal, and content doesn't matter.
+    @cache
     def match_terminal(self, cur: int, entry: Token) -> ASTMatchResult:
+        # no more symbols to match, entry is known not to be epsilon,
+        # fail gracefully
+        if cur >= self.length:
+            return ASTMatchResult(False, 0, None)
         cur_entity = self.get_at(cur)
         # some tokens must match explicitly, e.g. keywords, symbols; others
         # only need to match type.
@@ -131,7 +156,12 @@ class Parser:
                                              cur_entity, []))
         return ASTMatchResult(False, 0, None)
 
-        # A *specific* rule matching attempt
+    # A *specific* rule matching attempt.
+    # TODO:
+    # Currently doesn't do any backtracking, so prone to getting stuck on a
+    # successful but _incomplete_ parse if some other rule takes the cake.
+    # Maybe lua doesn't need this? But still, could be considered.
+    @cache
     def match_rule_starting_at(self,
                                cur: int, rule: ASTRule) -> ASTMatchResult:
         # every item of the rule must match tokens starting from index.
@@ -146,6 +176,10 @@ class Parser:
         # Depending on the number of stuff matched in each entry, we should
         # gather the results AND update `forward` so that subsequent matches
         # can start correctly.
+
+        # special case epsilon -- one entry in the rule only and it is epsilon
+        if rule[0] == "EPSILON" and len(rule) == 1:
+            return ASTMatchResult(True, 0, ASTNode("EPSILON", None, []))
 
         for i in range(0, len(entries)):
             entry: Union[str, Token] = entries[i]
@@ -166,6 +200,7 @@ class Parser:
                                                             rule)
                     if try_match:
                         match = try_match
+                        assert match.node is not None
                         break
                 if match:
                     forward += match.forward
@@ -183,4 +218,7 @@ class Parser:
     def parse(self, init_name: str = "BLOCK") -> ASTMatchResult:
         init = self.syntax[init_name][0]  # BLOCK has only one production rule.
         current = 0
-        return self.match_rule_starting_at(current, init)
+        match = self.match_rule_starting_at(current, init)
+        if match.forward != len(self.tokens):
+            match.match = False
+        return match

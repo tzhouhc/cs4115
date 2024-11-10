@@ -84,6 +84,10 @@ class Token:
         return isinstance(o, Token) and \
             self.type == o.type and self.string == o.string
 
+    def __hash__(self) -> int:
+        # Hash tuple of the enum value and string
+        return hash((self.type, self.string))
+
     def append(self, c: str) -> None:
         """
         Append a character to the string associated with the Token object.
