@@ -7,3 +7,6 @@ run-lexer-tests:
 
 run-parser-tests:
   python3 -m unittest tests/parser_test.py
+
+run-tests:
+  python3 -m unittest tests/*.py

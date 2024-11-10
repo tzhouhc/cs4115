@@ -1,7 +1,7 @@
 import unittest
 from utils.lexer import TokenStream
 from utils.token import Token, TokenType
-from utils.parser import Parser, ASTNode, ASTMatchResult
+from utils.parser import Parser
 from dataclasses import dataclass
 
 
@@ -118,7 +118,7 @@ class TestLexer(unittest.TestCase):
             "E[RET_STAT[TokenType.KEYWORD(return), TokenType.COLON(:), "
             "LIST_INT[TokenType.INTEGER(42), "
             "LIST_INT[TokenType.INTEGER(42), "
-            "LIST_INT[TokenType.INTEGER(42), EPSILON]]]]]"
+            "LIST_INT[TokenType.INTEGER(42)]]]]]"
         ))
 
     def test_ret_stat_list_empty(self):
@@ -128,8 +128,7 @@ class TestLexer(unittest.TestCase):
                 Token(TokenType.COLON, ":"),
             ]),
             True, 2,
-            "E[RET_STAT[TokenType.KEYWORD(return), TokenType.COLON(:), "
-            "EPSILON]]"
+            "E[RET_STAT[TokenType.KEYWORD(return), TokenType.COLON(:)]]"
         ))
 
     # Currently fails due to the syntax prioritizing matching the rule

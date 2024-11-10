@@ -480,7 +480,6 @@ class Parser:
     # and then match_rule_starting_at is for a single rule.
     @cache
     def match_non_terminal(self, name: str, cur: int) -> ASTMatchResult:
-        print(f"trying to match {name}")
         best = None
 
         for rule in self.syntax[name]:
