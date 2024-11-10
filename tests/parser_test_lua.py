@@ -13,7 +13,7 @@ class TestCase:
     want:  str
 
 
-class TestLexer(unittest.TestCase):
+class TestLuaParser(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -37,8 +37,8 @@ class TestLexer(unittest.TestCase):
                 Token(TokenType.INTEGER, "42")
             ]),
             True, 2,
-            "BLOCK[OPT_RETSTAT[RETSTAT[TokenType.KEYWORD(return), "
-            "OPT_EXPLIST[EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(42)]]]]]]]"
+            "CHUNK[BLOCK[OPT_RETSTAT[RETSTAT[TokenType.KEYWORD(return), "
+            "OPT_EXPLIST[EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(42)]]]]]]]]"
         ))
 
     def test_basic_stat(self):
@@ -49,9 +49,10 @@ class TestLexer(unittest.TestCase):
                 Token(TokenType.INTEGER, "4"),
             ]),
             True, 3,
-            "BLOCK[LIST_STAT[STAT[VARLIST[VAR[PRIMARYEXP[TokenType.ID(a)]]], "
+            "CHUNK[BLOCK[LIST_STAT[STAT[VARLIST[VAR[PRIMARYEXP"
+            "[TokenType.ID(a)]]], "
             "TokenType.OP(=), "
-            "EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(4)]]]]]]"
+            "EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(4)]]]]]]]"
         ))
 
     def test_basic_stats(self):
@@ -65,12 +66,13 @@ class TestLexer(unittest.TestCase):
                 Token(TokenType.INTEGER, "5"),
             ]),
             True, 6,
-            "BLOCK[LIST_STAT[STAT[VARLIST[VAR[PRIMARYEXP[TokenType.ID(a)]]], "
+            "CHUNK[BLOCK[LIST_STAT[STAT[VARLIST[VAR[PRIMARYEXP"
+            "[TokenType.ID(a)]]], "
             "TokenType.OP(=), "
             "EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(4)]]]], "
             "LIST_STAT[STAT[VARLIST[VAR[PRIMARYEXP[TokenType.ID(b)]]], "
             "TokenType.OP(=), "
-            "EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(5)]]]]]]]"
+            "EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(5)]]]]]]]]"
         ))
 
     def test_basic_stats_w_ret_stat(self):
@@ -90,6 +92,7 @@ class TestLexer(unittest.TestCase):
                 Token(TokenType.RPAREN, ")"),
             ]),
             True, 12,
+            "CHUNK["
             "BLOCK[LIST_STAT[STAT[VARLIST[VAR[PRIMARYEXP[TokenType.ID(a)]]], "
             "TokenType.OP(=), "
             "EXPLIST[EXP[SIMPLE_EXP[TokenType.INTEGER(4)]]]], "
@@ -101,7 +104,7 @@ class TestLexer(unittest.TestCase):
             "[TokenType.LPAREN((), "
             "EXP[SIMPLE_EXP[PREFIXEXP[PRIMARYEXP[TokenType.ID(a)], "
             "LIST_SUFFIX[SUFFIX[VARSUFFIX[TokenType.OP(+), "
-            "TokenType.ID(b)]]]]]], TokenType.RPAREN())]]]]]]]]]"
+            "TokenType.ID(b)]]]]]], TokenType.RPAREN())]]]]]]]]]]"
         ))
 
 

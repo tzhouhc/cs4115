@@ -412,6 +412,49 @@ class ASTNode:
                 f"nodes={repr(self.nodes)})")
 
 
+def pretty_print_ast(node: ASTNode, indent: int = 0,
+                     indent_char: str = "  ") -> str:
+    """
+    Pretty prints an AST with cascading indentation levels.
+
+    Args:
+        node: The AST node to print
+        indent: Current indentation level (default: 0)
+        indent_char: Character(s) to use for indentation (default: two spaces)
+
+    Returns:
+        A formatted string representation of the AST
+    """
+    # Build the current line
+    result = []
+    indent_str = indent_char * indent
+
+    # Add node type
+    result.append(f"{indent_str}{node.type}")
+
+    # Add token value if present
+    if node.token:
+        result.append(f"({node.token.string})")
+
+    # If there are child nodes, add them with increased indentation
+    if node.nodes:
+        result.append(" {")
+
+        # Process each child node
+        for i, child in enumerate(node.nodes):
+            child_str = pretty_print_ast(child, indent + 1, indent_char)
+            result.append("\n" + child_str)
+
+            # Add comma if not the last child
+            if i < len(node.nodes) - 1:
+                result[-1] += ","
+
+        # Close the children block
+        result.append("\n" + indent_str + "}")
+
+    return "".join(result)
+
+
 class ASTMatchResult:
     def __init__(self, match: bool, forward: int,
                  node: Optional[ASTNode]) -> None:
@@ -463,6 +506,9 @@ class Parser:
     def match_terminal(self, cur: int, entry: Token) -> ASTMatchResult:
         # no more symbols to match, entry is known not to be epsilon,
         # fail gracefully
+        if entry.type == TokenType.EOF and cur == len(self.tokens):
+            return ASTMatchResult(True, 0,
+                                  ASTNode(rule_element_name(entry), entry, []))
         if cur >= len(self.tokens):
             return ASTMatchResult(False, 0, None)
         cur_entity = self.get_at(cur)
@@ -479,7 +525,7 @@ class Parser:
     # the node, where it needs to explore a number of different rules,
     # and then match_rule_starting_at is for a single rule.
     @cache
-    def match_non_terminal(self, name: str, cur: int) -> ASTMatchResult:
+    def match_non_terminal(self, cur: int, name: str) -> ASTMatchResult:
         best = None
 
         for rule in self.syntax[name]:
@@ -490,7 +536,9 @@ class Parser:
             if best is None or try_match.forward > best.forward:
                 best = try_match
 
-        return best if best else ASTMatchResult(False, 0, None)
+        if best:
+            return best
+        return ASTMatchResult(False, 0, None)
 
     @cache
     def match_rule_starting_at(self, cur: int,
@@ -509,6 +557,7 @@ class Parser:
             if isinstance(entry, Token):
                 match = self.match_terminal(cur + forward, entry)
                 if match:
+                    logger.debug(f"matched T {entry}")
                     node = match.node
                     assert node is not None
                     got_match = True
@@ -516,8 +565,10 @@ class Parser:
                         forward += match.forward
                         saved_nodes.append(node)
             else:
-                match = self.match_non_terminal(entry, cur + forward)
+                match = self.match_non_terminal(cur + forward, entry)
                 if match:
+                    logger.debug(f"matched NT {entry} with forward "
+                                 "{match.forward}")
                     forward += match.forward
                     assert match.node is not None
                     got_match = True
@@ -529,10 +580,12 @@ class Parser:
                 # else.
                 return ASTMatchResult(False, 0, None)
 
+        logger.info(f"matched rule {rule} with forward {forward}")
         result_node.nodes = saved_nodes
+        logger.debug(pretty_print_ast(result_node))
         return ASTMatchResult(True, forward, result_node)
 
-    def parse(self, init_name: str = "BLOCK") -> ASTMatchResult:
+    def parse(self, init_name: str = "CHUNK") -> ASTMatchResult:
         # hack to ensure that must match an EOF at the end to succeed
         eof = Token(TokenType.EOF, "")
         init: ASTRule = self.syntax[init_name][0]
@@ -541,4 +594,4 @@ class Parser:
         if self.tokens[-1] != eof:
             self.tokens.append(eof)
 
-        return self.match_non_terminal(init_name, 0)
+        return self.match_non_terminal(0, init_name)

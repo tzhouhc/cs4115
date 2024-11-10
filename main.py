@@ -51,7 +51,10 @@ def main() -> int:
     g = grammar.STATE_TABLE
     lexed = lexer.Lexer(args.text, dfa.SimpleAutomata(g), args).lex()
     parsed = parser.Parser(lexed, parser.SYNTAX_MAP).parse()
-    print(parsed)
+    if not parsed:
+        return 1
+    assert parsed.node is not None
+    print(parser.pretty_print_ast(parsed.node))
     return 0
 
 
