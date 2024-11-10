@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from utils import lexer, grammar, dfa
+from utils import lexer, grammar, dfa, parser
 from argparse import ArgumentParser, BooleanOptionalAction
 import logging
 import sys
@@ -49,8 +49,9 @@ def main() -> int:
     args = arg_parser().parse_args()
     setup_logger(args.verbose)
     g = grammar.STATE_TABLE
-    result = lexer.Lexer(args.text, dfa.SimpleAutomata(g), args)
-    print(result.lex())
+    lexed = lexer.Lexer(args.text, dfa.SimpleAutomata(g), args).lex()
+    parsed = parser.Parser(lexed, parser.SYNTAX_MAP).parse()
+    print(parsed)
     return 0
 
 

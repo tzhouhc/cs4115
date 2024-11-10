@@ -151,7 +151,7 @@ class Lexer:
     """
 
     def __init__(self, input: str, dfa: SimpleAutomata,
-                 options: Optional[LexerOptions] = None) -> None:
+                 options: Optional[argparse.Namespace] = None) -> None:
         self.input = input
         self.pos = 0
         self.max = len(input)
