@@ -102,15 +102,7 @@ class ASTMatchResult:
             f"forward={self.forward}, node={repr(self.node)})"
 
 
-class ASTMatchSet:
-    def __init__(self, matches: list[ASTMatchResult]) -> None:
-        self.matches = matches
-
-    def __iter__(self):
-        return iter(self.matches)
-
-
-# Recursive Descent
+# Recursive Descent Parser
 class Parser:
     def __init__(self, tokens: TokenStream,
                  syntax: dict[str, list[list[Union[str, Token]]]]) -> None:
@@ -155,78 +147,69 @@ class Parser:
                                              cur_entity, []))
         return ASTMatchResult(False, 0, None)
 
-    # A *specific* rule matching attempt.
-    # TODO:
-    # Currently doesn't do any backtracking, so prone to getting stuck on a
-    # successful but _incomplete_ parse if some other rule takes the cake.
-    # Maybe lua doesn't need this? But still, could be considered.
+    # A bit of an awkward two-stage recursion: match_non_terminal is about
+    # the node, where it needs to explore a number of different rules,
+    # and then match_rule_starting_at is for a single rule.
     @cache
-    def match_rule_starting_at(self,
-                               cur: int, rule: ASTRule) -> ASTMatchResult:
-        # every item of the rule must match tokens starting from index.
-        forward = 0
-        # forward records the total progress made. If the rule is all
-        # terminals, then this should equal the length of the rule. If not,
-        # we cannot say for sure.
-        entries: list[Union[str, Token]] = rule.entries
-        # entries are the individual things that need to match starting from
-        # positino `cur`.
-        result_node = ASTNode(rule.name, None, [])
-        # Depending on the number of stuff matched in each entry, we should
-        # gather the results AND update `forward` so that subsequent matches
-        # can start correctly.
+    def match_non_terminal(self, name: str, cur: int) -> ASTMatchResult:
+        best = None
 
-        # special case epsilon -- one entry in the rule only and it is epsilon
-        print(f"entries are {entries}")
+        for rule in self.syntax[name]:
+            try_match = self.match_rule_starting_at(cur, rule)
+            if not try_match:
+                continue
+            # Keep track of the longest successful match
+            if best is None or try_match.forward > best.forward:
+                best = try_match
+
+        return best if best else ASTMatchResult(False, 0, None)
+
+    @cache
+    def match_rule_starting_at(self, cur: int,
+                               rule: ASTRule) -> ASTMatchResult:
+        # Special case for epsilon
         if rule[0] == "EPSILON" and len(rule) == 1:
             return ASTMatchResult(True, 0, ASTNode("EPSILON", None, []))
 
-        for i in range(0, len(entries)):
-            entry: Union[str, Token] = entries[i]
+        forward = 0
+        result_node = ASTNode(rule.name, None, [])
+        saved_nodes = []
+
+        for entry in rule.entries:
             got_match = False
+
             if isinstance(entry, Token):
-                print(f"trying to match token {entry}")
                 match = self.match_terminal(cur + forward, entry)
                 if match:
                     node = match.node
                     assert node is not None
                     got_match = True
-                    print(f"adding node {node} with type {node.type}")
                     if (node.type != "TokenType.EOF"):
                         forward += match.forward
-                        result_node.nodes += [node]
+                        saved_nodes.append(node)
             else:
-                match: ASTMatchResult = ASTMatchResult(False, 0, None)
-                # non-terminal, can have multiple rules, match any of them.
-                for rule in self.syntax[entry]:
-                    try_match = self.match_rule_starting_at(cur + forward,
-                                                            rule)
-                    if try_match:
-                        match = try_match
-                        assert match.node is not None
-                        break
+                match = self.match_non_terminal(entry, cur + forward)
                 if match:
                     forward += match.forward
-                    node = match.node
-                    assert node is not None
-                    result_node.nodes += [node]
+                    assert match.node is not None
+                    saved_nodes.append(match.node)
                     got_match = True
+
             if not got_match:
+                # Nope, found nothing useful. Tell caller to try something
+                # else.
                 return ASTMatchResult(False, 0, None)
 
-        print(f"matched {result_node}")
-        return ASTMatchResult(
-            True, forward, result_node
-        )
+        result_node.nodes = saved_nodes
+        return ASTMatchResult(True, forward, result_node)
 
     def parse(self, init_name: str = "BLOCK") -> ASTMatchResult:
-        init: ASTRule = self.syntax[init_name][0]
         # hack to ensure that must match an EOF at the end to succeed
         eof = Token(TokenType.EOF, "")
+        init: ASTRule = self.syntax[init_name][0]
         if init[-1] != eof:
             init.entries += [eof]
         if self.tokens[-1] != eof:
             self.tokens.append(eof)
-        current = 0
-        match = self.match_rule_starting_at(current, init)
-        return match
+
+        return self.match_non_terminal(init_name, 0)
