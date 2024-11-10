@@ -9,29 +9,357 @@ logger = logging.getLogger(__name__)
 
 # The lua syntax essentials (abridged version for the sake of homework)
 SYNTAX_MAP = {
-    "VAR": [
-        ["NAME"],
-        ["PREFIX_EXP", Token(TokenType.LBRACKET, "["), "EXP",
-         Token(TokenType.RBRACKET, "]")],
+    "CHUNK": [
+        ["BLOCK"]
     ],
-    "PREFIX_EXP": [
-        ["VAR"],
-        ["FUNC_CALL"],
-        [Token(TokenType.LPAREN, "("), "EXP", Token(TokenType.RPAREN, ")")]
-    ],
+
     "BLOCK": [
         ["LIST_STAT", "OPT_RETSTAT"]
     ],
+
     "LIST_STAT": [
         ["STAT", "LIST_STAT"],
-        ["EPSILON"],
+        ["EPSILON"]
     ],
+
     "OPT_RETSTAT": [
         ["RETSTAT"],
         ["EPSILON"]
     ],
+
+    "STAT": [
+        [Token(TokenType.SEMICOLON, ";")],
+        ["VARLIST", Token(TokenType.OP, "="), "EXPLIST"],
+        ["FUNCTIONCALL"],
+        ["LABEL"],
+        [Token(TokenType.KEYWORD, "break")],
+        [Token(TokenType.KEYWORD, "goto"), Token(TokenType.ID, "Name")],
+        [Token(TokenType.KEYWORD, "do"), "BLOCK",
+         Token(TokenType.KEYWORD, "end")],
+        [Token(TokenType.KEYWORD, "while"), "EXP",
+         Token(TokenType.KEYWORD, "do"), "BLOCK",
+         Token(TokenType.KEYWORD, "end")],
+        [Token(TokenType.KEYWORD, "repeat"), "BLOCK",
+         Token(TokenType.KEYWORD, "until"), "EXP"],
+        ["IF_STAT"],
+        ["FOR_NUM_STAT"],
+        ["FOR_IN_STAT"],
+        ["FUNCTION_STAT"],
+        ["LOCAL_FUNCTION_STAT"],
+        ["LOCAL_STAT"]
+    ],
+
+    "IF_STAT": [
+        [Token(TokenType.KEYWORD, "if"), "EXP",
+         Token(TokenType.KEYWORD, "then"), "BLOCK",
+         "LIST_ELSEIF", "OPT_ELSE",
+         Token(TokenType.KEYWORD, "end")]
+    ],
+
+    "LIST_ELSEIF": [
+        ["ELSEIF", "LIST_ELSEIF"],
+        ["EPSILON"]
+    ],
+
+    "ELSEIF": [
+        [Token(TokenType.KEYWORD, "elseif"), "EXP",
+         Token(TokenType.KEYWORD, "then"), "BLOCK"]
+    ],
+
+    "OPT_ELSE": [
+        [Token(TokenType.KEYWORD, "else"), "BLOCK"],
+        ["EPSILON"]
+    ],
+
+    "FOR_NUM_STAT": [
+        [Token(TokenType.KEYWORD, "for"),
+         Token(TokenType.ID, "Name"),
+         Token(TokenType.OP, "="),
+         "EXP",
+         Token(TokenType.COMMA, ","),
+         "EXP", "OPT_STEP",
+         Token(TokenType.KEYWORD, "do"),
+         "BLOCK",
+         Token(TokenType.KEYWORD, "end")]
+    ],
+
+    "OPT_STEP": [
+        [Token(TokenType.COMMA, ","), "EXP"],
+        ["EPSILON"]
+    ],
+
+    "FOR_IN_STAT": [
+        [Token(TokenType.KEYWORD, "for"), "NAMELIST",
+         Token(TokenType.KEYWORD, "in"), "EXPLIST",
+         Token(TokenType.KEYWORD, "do"), "BLOCK",
+         Token(TokenType.KEYWORD, "end")]
+    ],
+
+    "FUNCTION_STAT": [
+        [Token(TokenType.KEYWORD, "function"), "FUNCNAME", "FUNCBODY"]
+    ],
+
+    "LOCAL_FUNCTION_STAT": [
+        [Token(TokenType.KEYWORD, "local"),
+         Token(TokenType.KEYWORD, "function"),
+         Token(TokenType.ID, "Name"), "FUNCBODY"]
+    ],
+
+    "LOCAL_STAT": [
+        [Token(TokenType.KEYWORD, "local"),
+         "ATTNAMELIST", "OPT_ASSIGN_EXPLIST"]
+    ],
+
+    "OPT_ASSIGN_EXPLIST": [
+        [Token(TokenType.OP, "="), "EXPLIST"],
+        ["EPSILON"]
+    ],
+
+    "ATTNAMELIST": [
+        ["NAME_ATTRIB", "LIST_NAME_ATTRIB"]
+    ],
+
+    "LIST_NAME_ATTRIB": [
+        [Token(TokenType.COMMA, ","), "NAME_ATTRIB", "LIST_NAME_ATTRIB"],
+        ["EPSILON"]
+    ],
+
+    "NAME_ATTRIB": [
+        [Token(TokenType.ID, "Name"), "OPT_ATTRIB"]
+    ],
+
+    "OPT_ATTRIB": [
+        [Token(TokenType.OP, "<"),
+         Token(TokenType.ID, "Name"),
+         Token(TokenType.OP, ">")],
+        ["EPSILON"]
+    ],
+
     "RETSTAT": [
-        [Token(TokenType.KEYWORD, "return"), "EXP_LIST"]
+        [Token(TokenType.KEYWORD, "return"), "OPT_EXPLIST", "OPT_SEMICOLON"]
+    ],
+
+    "OPT_EXPLIST": [
+        ["EXPLIST"],
+        ["EPSILON"]
+    ],
+
+    "OPT_SEMICOLON": [
+        [Token(TokenType.SEMICOLON, ";")],
+        ["EPSILON"]
+    ],
+
+    "LABEL": [
+        [Token(TokenType.OP, "::"), Token(TokenType.ID, "Name"),
+         Token(TokenType.OP, "::")]
+    ],
+
+    "FUNCNAME": [
+        [Token(TokenType.ID, "Name"), "LIST_DOT_NAME", "OPT_METHOD_NAME"]
+    ],
+
+    "LIST_DOT_NAME": [
+        [Token(TokenType.OP, "."), Token(
+            TokenType.ID, "Name"), "LIST_DOT_NAME"],
+        ["EPSILON"]
+    ],
+
+    "OPT_METHOD_NAME": [
+        [Token(TokenType.COLON, ":"), Token(TokenType.ID, "Name")],
+        ["EPSILON"]
+    ],
+
+    "VARLIST": [
+        ["VAR", "LIST_VAR"]
+    ],
+
+    "LIST_VAR": [
+        [Token(TokenType.COMMA, ","), "VAR", "LIST_VAR"],
+        ["EPSILON"]
+    ],
+
+    "NAMELIST": [
+        [Token(TokenType.ID, "Name"), "LIST_NAME"]
+    ],
+
+    "LIST_NAME": [
+        [Token(TokenType.COMMA, ","), Token(
+            TokenType.ID, "Name"), "LIST_NAME"],
+        ["EPSILON"]
+    ],
+
+    "EXPLIST": [
+        ["EXP", "LIST_EXP"]
+    ],
+
+    "LIST_EXP": [
+        [Token(TokenType.COMMA, ","), "EXP", "LIST_EXP"],
+        ["EPSILON"]
+    ],
+
+    "EXP": [
+        ["SIMPLE_EXP", "LIST_BINOP_EXP"]
+    ],
+
+    "LIST_BINOP_EXP": [
+        ["BINOP", "SIMPLE_EXP", "LIST_BINOP_EXP"],
+        ["EPSILON"]
+    ],
+
+    "SIMPLE_EXP": [
+        [Token(TokenType.KEYWORD, "nil")],
+        [Token(TokenType.KEYWORD, "false")],
+        [Token(TokenType.KEYWORD, "true")],
+        [Token(TokenType.INTEGER, "")],
+        [Token(TokenType.STRING, "LiteralString")],
+        [Token(TokenType.OP, "...")],
+        ["FUNCTIONDEF"],
+        ["PREFIXEXP"],
+        ["TABLECONSTRUCTOR"],
+        ["UNOP", "SIMPLE_EXP"]  # Unary operators
+    ],
+
+    "VAR": [
+        ["PRIMARYEXP", "LIST_VARSUFFIX"]  # Changed to use new structure
+    ],
+
+    "LIST_VARSUFFIX": [
+        ["VARSUFFIX", "LIST_VARSUFFIX"],
+        ["EPSILON"]
+    ],
+
+    "VARSUFFIX": [
+        [Token(TokenType.LBRACKET, "["), "EXP",
+         Token(TokenType.RBRACKET, "]")],
+        [Token(TokenType.OP, "."),
+         Token(TokenType.ID, "Name")]
+    ],
+
+    "PRIMARYEXP": [
+        [Token(TokenType.ID, "Name")],
+        [Token(TokenType.LPAREN, "("), "EXP", Token(TokenType.RPAREN, ")")]
+    ],
+
+    "PREFIXEXP": [
+        ["PRIMARYEXP", "LIST_SUFFIX"]
+    ],
+
+    "LIST_SUFFIX": [
+        ["SUFFIX", "LIST_SUFFIX"],
+        ["EPSILON"]
+    ],
+
+    "SUFFIX": [
+        ["VARSUFFIX"],  # Reuse VARSUFFIX for array indexing and field access
+        ["CALLSUFFIX"]  # New rule for function calls
+    ],
+
+    "CALLSUFFIX": [
+        ["ARGS"],
+        [Token(TokenType.COLON, ":"), Token(TokenType.ID, "Name"), "ARGS"]
+    ],
+
+    "FUNCTIONCALL": [
+        ["PRIMARYEXP", "LIST_SUFFIX", "CALLSUFFIX"]  # Must end with a call
+    ],
+
+    "ARGS": [
+        [Token(TokenType.LPAREN, "("), "OPT_EXPLIST",
+         Token(TokenType.RPAREN, ")")],
+        ["TABLECONSTRUCTOR"],
+        [Token(TokenType.STRING, "LiteralString")]
+    ],
+
+    "FUNCTIONDEF": [
+        [Token(TokenType.KEYWORD, "function"), "FUNCBODY"]
+    ],
+
+    "FUNCBODY": [
+        [Token(TokenType.LPAREN, "("), "OPT_PARLIST",
+         Token(TokenType.RPAREN, ")"),
+         "BLOCK", Token(TokenType.KEYWORD, "end")]
+    ],
+
+    "OPT_PARLIST": [
+        ["PARLIST"],
+        ["EPSILON"]
+    ],
+
+    "PARLIST": [
+        ["NAMELIST", "OPT_COMMA_VARARG"],
+        [Token(TokenType.OP, "...")]
+    ],
+
+    "OPT_COMMA_VARARG": [
+        [Token(TokenType.COMMA, ","), Token(TokenType.OP, "...")],
+        ["EPSILON"]
+    ],
+
+    "TABLECONSTRUCTOR": [
+        [Token(TokenType.LCURLY, "{"), "OPT_FIELDLIST",
+         Token(TokenType.RCURLY, "}")]
+    ],
+
+    "OPT_FIELDLIST": [
+        ["FIELDLIST"],
+        ["EPSILON"]
+    ],
+
+    "FIELDLIST": [
+        ["FIELD", "LIST_FIELDSEP_FIELD", "OPT_FIELDSEP"]
+    ],
+
+    "LIST_FIELDSEP_FIELD": [
+        ["FIELDSEP", "FIELD", "LIST_FIELDSEP_FIELD"],
+        ["EPSILON"]
+    ],
+
+    "OPT_FIELDSEP": [
+        ["FIELDSEP"],
+        ["EPSILON"]
+    ],
+
+    "FIELD": [
+        [Token(TokenType.LBRACKET, "["), "EXP", Token(TokenType.RBRACKET, "]"),
+         Token(TokenType.OP, "="), "EXP"],
+        [Token(TokenType.ID, "Name"), Token(TokenType.OP, "="), "EXP"],
+        ["EXP"]
+    ],
+
+    "FIELDSEP": [
+        [Token(TokenType.COMMA, ",")],
+        [Token(TokenType.SEMICOLON, ";")]
+    ],
+
+    "BINOP": [
+        [Token(TokenType.OP, "+")],
+        [Token(TokenType.OP, "-")],
+        [Token(TokenType.OP, "*")],
+        [Token(TokenType.OP, "/")],
+        [Token(TokenType.OP, "//")],
+        [Token(TokenType.OP, "^")],
+        [Token(TokenType.OP, "%")],
+        [Token(TokenType.OP, "&")],
+        [Token(TokenType.OP, "~")],
+        [Token(TokenType.OP, "|")],
+        [Token(TokenType.OP, ">>")],
+        [Token(TokenType.OP, "<<")],
+        [Token(TokenType.OP, "..")],
+        [Token(TokenType.OP, "<")],
+        [Token(TokenType.OP, "<=")],
+        [Token(TokenType.OP, ">")],
+        [Token(TokenType.OP, ">=")],
+        [Token(TokenType.OP, "==")],
+        [Token(TokenType.OP, "~=")],
+        [Token(TokenType.KEYWORD, "and")],
+        [Token(TokenType.KEYWORD, "or")]
+    ],
+
+    "UNOP": [
+        [Token(TokenType.OP, "-")],
+        [Token(TokenType.KEYWORD, "not")],
+        [Token(TokenType.OP, "#")],
+        [Token(TokenType.OP, "~")]
     ]
 }
 
@@ -152,6 +480,7 @@ class Parser:
     # and then match_rule_starting_at is for a single rule.
     @cache
     def match_non_terminal(self, name: str, cur: int) -> ASTMatchResult:
+        print(f"trying to match {name}")
         best = None
 
         for rule in self.syntax[name]:

@@ -11,6 +11,7 @@ class TokenType(Enum):
     LCURLY = auto()  # {
     RCURLY = auto()  # }
     COLON = auto()  # :
+    SEMICOLON = auto()  # ;
     KEYWORD = auto()
     # The following are reserved as keywords:
     # and       break     do        else      elseif    end
