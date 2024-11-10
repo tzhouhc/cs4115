@@ -23,6 +23,12 @@ class TokenStream:
         if init:
             self.tokens: list[Token] = init
 
+    def __getitem__(self, i: int) -> Token:
+        return self.tokens[i]
+
+    def __len__(self) -> int:
+        return len(self.tokens)
+
     def __str__(self) -> str:
         """
         Return a string representation of the TokenStream.

@@ -31,6 +31,12 @@ class TokenType(Enum):
     ERROR = auto()
 
 
+VARIABLE_TOKENS = [
+    TokenType.OP, TokenType.INTEGER, TokenType.FLOAT,
+    TokenType.STRING, TokenType.WHITE_SPACE, TokenType.ID
+]
+
+
 class Token:
     def __init__(self, t: TokenType, s: str = "") -> None:
         """
