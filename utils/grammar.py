@@ -83,7 +83,7 @@ STATE_TABLE = {
     "dot_dot": {".": "dot_dot_dot", "DONE": TokenType.OP},
     "dot_dot_dot": {"DONE": TokenType.OP},
     "comma": {"DONE": TokenType.OP},
-    "semicolon": {"DONE": TokenType.OP},
+    "semicolon": {"DONE": TokenType.SEMICOLON},
     "colon": {":": "double_colon", "DONE": TokenType.COLON},
     "double_colon": {"DONE": TokenType.OP},
     "and_a": {"n": "and_an", "LETTER": "id", "DONE": TokenType.ID},

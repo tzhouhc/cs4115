@@ -33,8 +33,10 @@ class TokenType(Enum):
     EOF = auto()
 
 
+# KEYWORD and OP now also must match strictly since the syntax has provided
+# the full matching guidelines
 VARIABLE_TOKENS = [
-    TokenType.OP, TokenType.INTEGER, TokenType.FLOAT,
+    TokenType.INTEGER, TokenType.FLOAT,
     TokenType.STRING, TokenType.WHITE_SPACE, TokenType.ID
 ]
 

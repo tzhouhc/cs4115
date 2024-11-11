@@ -50,6 +50,7 @@ def main() -> int:
     setup_logger(args.verbose)
     g = grammar.STATE_TABLE
     lexed = lexer.Lexer(args.text, dfa.SimpleAutomata(g), args).lex()
+    print(f"Got token stream: {lexed}")
     parsed = parser.Parser(lexed, parser.SYNTAX_MAP).parse()
     if not parsed:
         return 1
