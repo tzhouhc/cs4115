@@ -9,6 +9,7 @@ COPY tests ./tests
 COPY __init__.py ./
 COPY main.py ./
 COPY ./run_basic_demo.sh ./
+COPY ./sample_inputs.txt ./
 
 RUN useradd app
 USER app

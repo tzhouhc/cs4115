@@ -87,15 +87,25 @@ def pretty_print_ast(node: ASTNode, indent: int = 0,
 
         # Process each child node
         for i, child in enumerate(node.nodes):
+            # For nested structures with single children, keep on same line
             child_str = pretty_print_ast(child, indent + 1, indent_char)
-            result.append("\n" + child_str)
+
+            # Check if child is a simple node (no children)
+            is_simple = not child.nodes
+
+            if is_simple and result[-1] != " {":
+                result.append(" " + child_str.lstrip())
+            else:
+                result.append("\n" + child_str)
 
             # Add comma if not the last child
             if i < len(node.nodes) - 1:
-                result[-1] += ","
+                result.append(",")
 
-        # Close the children block
-        result.append("\n" + indent_str + "}")
+        if result[-1].rstrip().endswith("}"):
+            result.append("}")
+        else:
+            result.append("\n" + indent_str + "}")
 
     return "".join(result)
 

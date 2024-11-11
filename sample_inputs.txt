@@ -1,0 +1,5 @@
+a = 3
+a = a + b
+a = 3; b = 4; c = 5; d = a + b + c
+while a < 10 do a = a + 1 end
+local function a(n) return n + 1 end return a
