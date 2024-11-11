@@ -18,7 +18,7 @@ def rule_element_name(e: RuleElement):
 
 
 class ASTRule:
-    def __init__(self, name: str, entries: list[Union[str, Token]]):
+    def __init__(self, name: str, entries: list[RuleElement]):
         self.name = name
         self.entries = entries
 
@@ -29,7 +29,8 @@ class ASTRule:
         return len(self.entries)
 
     def __str__(self) -> str:
-        return f"{self.name} -> " + " ".join([str(e) for e in self.entries])
+        return f"{self.name} -> " + " ".join(
+            [rule_element_name(e) for e in self.entries])
 
 
 class ASTNode:
@@ -107,6 +108,8 @@ class ASTMatchResult:
         self.node = node
 
     def __bool__(self):
+        # doesn't matter if ASTNode is not None and has content, as long as
+        # match is not set to True, this is considered False
         return self.match
 
     def __str__(self):
@@ -126,6 +129,10 @@ class Parser:
             key: [ASTRule(key, rule) for rule in item]
             for key, item in syntax.items()
         }
+        # global var to track the furthest any attempt got to before possibly
+        # failing.
+        self.best_attempt_progress = 0
+        self.best_attempt_reason = None
 
     def __str__(self) -> str:
         res = f"Tokens: {self.tokens}\n"
@@ -184,16 +191,23 @@ class Parser:
             return best
         return ASTMatchResult(False, 0, None)
 
+    def update_best_failed_attempt(self, progress: int, reason: str):
+        if self.best_attempt_progress < progress:
+            self.best_attempt_progress = progress
+            self.best_attempt_reason = reason
+
     @cache
     def match_rule_starting_at(self, cur: int,
                                rule: ASTRule) -> ASTMatchResult:
-        # Special case for epsilon
+        # Special case for epsilon: all epsilon rules only ever show up alone
+        # as the sole entry in the rule.
         if rule[0] == "EPSILON" and len(rule) == 1:
             return ASTMatchResult(True, 0, ASTNode("EPSILON", None, []))
 
         forward = 0
         result_node = ASTNode(rule.name, None, [])
         saved_nodes = []
+        so_far_matched = 0
 
         for entry in rule.entries:
             got_match = False
@@ -201,6 +215,7 @@ class Parser:
             if isinstance(entry, Token):
                 match = self.match_terminal(cur + forward, entry)
                 if match:
+                    so_far_matched += 1
                     logger.debug(f"matched T {entry}")
                     node = match.node
                     assert node is not None
@@ -211,6 +226,7 @@ class Parser:
             else:
                 match = self.match_non_terminal(cur + forward, entry)
                 if match:
+                    so_far_matched += 1
                     logger.debug(f"matched NT {entry} with forward "
                                  "{match.forward}")
                     forward += match.forward
@@ -222,7 +238,15 @@ class Parser:
             if not got_match:
                 # Nope, found nothing useful. Tell caller to try something
                 # else.
-                return ASTMatchResult(False, 0, None)
+                self.update_best_failed_attempt(
+                    cur + so_far_matched,
+                    f"For rule {rule}, "
+                    f"{rule[so_far_matched]} expected "
+                    f"at {cur + so_far_matched}, "
+                    f"received {self.get_at(cur + so_far_matched)} instead."
+                )
+                result_node.nodes = saved_nodes
+                return ASTMatchResult(False, forward, result_node)
 
         logger.info(f"matched rule {rule} with forward {forward}")
         result_node.nodes = saved_nodes
@@ -238,4 +262,7 @@ class Parser:
         if self.tokens[-1] != eof:
             self.tokens.append(eof)
 
-        return self.match_non_terminal(0, init_name)
+        res = self.match_non_terminal(0, init_name)
+        if not res:
+            print(self.best_attempt_reason)
+        return res
