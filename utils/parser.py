@@ -264,5 +264,5 @@ class Parser:
 
         res = self.match_non_terminal(0, init_name)
         if not res:
-            print(self.best_attempt_reason)
+            logger.error(self.best_attempt_reason)
         return res
