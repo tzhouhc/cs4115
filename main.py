@@ -51,7 +51,7 @@ def main() -> int:
     g = grammar.STATE_TABLE
     lexed = lexer.Lexer(args.text, dfa.SimpleAutomata(g), args).lex()
     print(f"Got token stream: {lexed}")
-    parsed = parser.Parser(lexed, parser.SYNTAX_MAP).parse()
+    parsed = parser.Parser(lexed, grammar.SYNTAX_MAP).parse()
     if not parsed:
         return 1
     assert parsed.node is not None

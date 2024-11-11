@@ -1,7 +1,8 @@
 import unittest
 from utils.lexer import TokenStream
 from utils.token import Token, TokenType
-from utils.parser import Parser, SYNTAX_MAP
+from utils.parser import Parser
+from utils.grammar import SYNTAX_MAP
 from dataclasses import dataclass
 
 
