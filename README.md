@@ -87,6 +87,8 @@ Or use the provided commands in the justfile.
 
 ## Video
 
+[Video link to Google Drive](https://drive.google.com/file/d/1yd55ag1o2JgzVgUijb3Dep029bz0l2re/view?usp=sharing)
+
 Since everything is done on the commandline, here's a [Link to
 asciinema](https://asciinema.org/a/688604).
 
