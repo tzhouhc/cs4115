@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from utils import lexer, grammar, dfa, parser
+from utils import grammar
 from argparse import ArgumentParser, BooleanOptionalAction
 import logging
 import sys
+import lark
 
 
 def setup_logger(verbosity):
@@ -48,14 +49,11 @@ def arg_parser() -> ArgumentParser:
 def main() -> int:
     args = arg_parser().parse_args()
     setup_logger(args.verbose)
-    g = grammar.STATE_TABLE
-    lexed = lexer.Lexer(args.text, dfa.SimpleAutomata(g), args).lex()
-    print(f"Got token stream: {lexed}")
-    parsed = parser.Parser(lexed, grammar.SYNTAX_MAP).parse()
-    if not parsed:
-        return 1
-    assert parsed.node is not None
-    print(parser.pretty_print_ast(parsed.node))
+    parser = lark.Lark(grammar.LARK_GRAMMAR, start="chunk")
+    try:
+        print(parser.parse(args.text).pretty())
+    except lark.exceptions.LarkError as e:
+        print(e)
     return 0
 
 

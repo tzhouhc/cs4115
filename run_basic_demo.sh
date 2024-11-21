@@ -6,9 +6,6 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Running unit tests (tests/lexer_test.py)${NC}"
-python3 -m unittest tests/*.py
-
 while IFS= read -r line || [ -n "$line" ]; do
     # Skip empty lines
     if [ -z "$line" ]; then
