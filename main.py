@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from utils import grammar
+from utils import grammar, code_gen
 from argparse import ArgumentParser, BooleanOptionalAction
 import logging
 import sys
@@ -50,10 +50,16 @@ def main() -> int:
     args = arg_parser().parse_args()
     setup_logger(args.verbose)
     parser = lark.Lark(grammar.LARK_GRAMMAR, start="chunk")
+    ast = None
     try:
-        print(parser.parse(args.text).pretty())
+        ast = parser.parse(args.text)
+        print(ast.pretty())
     except lark.exceptions.LarkError as e:
         print(e)
+        exit(1)
+    assert ast is not None
+    generator = code_gen.CodeGenerator(ast)
+    print(generator.gen())
     return 0
 
 
