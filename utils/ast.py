@@ -1,24 +1,7 @@
-from abc import ABC
-from typing import Any, List, Optional, Type
 import lark
 import inspect
 from . import code_gen, parser
-
-
-class ASTNode(ABC):
-    def __init__(self) -> None:
-        self.name = ""
-        self.symbol_table: Optional[dict] = None
-        self.parent: Optional[ASTNode] = None
-        self.children: Optional[List[Any]] = None
-
-    def gen(self) -> str:
-        return str(self.name)
-
-    def get(self, t: Type) -> List['ASTNode']:
-        if not self.children:
-            return []
-        return [c for c in self.children if isinstance(c, t)]
+from .ast_base import ASTNode
 
 
 def snake_to_camel(name):
@@ -30,7 +13,6 @@ def snake_to_camel(name):
 def ast_from_lark(ast: lark.Tree) -> ASTNode:
     node_type = snake_to_camel(ast.data) + "Node"
     node = globals()[node_type]()
-    print(node)
     assert isinstance(node, ASTNode)
     children = []
     for c in ast.children:
@@ -39,6 +21,7 @@ def ast_from_lark(ast: lark.Tree) -> ASTNode:
         else:
             cnode = ast_from_lark(c)
             cnode.parent = node
+            cnode.symbol_table.parent = node.symbol_table
             children += [cnode]
     node.children = children
     node.name = ast.data

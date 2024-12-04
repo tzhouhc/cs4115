@@ -53,7 +53,6 @@ def main() -> int:
     lark_parser = parser.PARSER
     try:
         lark_ast = lark_parser.parse(args.text)
-        print(lark_ast.pretty())
     except lark.exceptions.LarkError as e:
         print(e)
         exit(1)
