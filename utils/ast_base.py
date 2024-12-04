@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Type, Callable
 from .symbols_base import SymbolTable
 
 
@@ -20,3 +20,6 @@ class ASTNode(ABC):
         if not self.children:
             return []
         return [c for c in self.children if isinstance(c, t)]
+
+    def map(self, f: Callable[['ASTNode'], Any]) -> List[Any]:
+        return list(map(f, self.children))
