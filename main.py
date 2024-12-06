@@ -59,6 +59,7 @@ def main() -> int:
     assert lark_ast is not None
     # generator = code_gen.CodeGenerator(ast)
     my_ast = ast.ast_from_lark(lark_ast)
+    my_ast.update_symbols()
     print(my_ast.gen())
     return 0
 

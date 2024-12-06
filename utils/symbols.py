@@ -24,4 +24,3 @@ class SymbolTable:
 
     def insert(self, name, symbol):
         self.symbols[name] = symbol
-

@@ -20,8 +20,15 @@ class ForInNode(ASTNode):
 
 class VarNode(ASTNode):
     def gen(self):
-        assert isinstance(self.children[0], lark.Token)
-        return self.children[0].value
+        # NAME
+        if isinstance(self.children[0], lark.Token):
+            return self.children[0].value
+        # PREFIX[exp]
+        if isinstance(self.children[2], ExpNode):
+            return self.children[0].gen() + "[" + self.children[2].gen() + "]"
+        # PREFIX.NAME
+        else:
+            return self.children[0].gen() + "." + self.children[2].value
 
 
 class ForRangeNode(ASTNode):
@@ -58,6 +65,11 @@ class FuncbodyNode(ASTNode):
     def gen(self):
         return "\n".join(map(lambda n: n.gen(), self.children[1:]))
 
+    def update_symbols(self):
+        params = self.get_only(ParlistNode).get_only(NamelistNode)
+        for c in params.children:
+            self.symbol_table.insert(c, Symbol())
+
 
 class VarlistStar4Node(ASTNode):
     pass
@@ -75,7 +87,20 @@ class ExpNode(ASTNode):
 
 class StatNode(ASTNode):
     def gen(self):
+        vars = self.get(VarlistNode)
+        if vars:  # multiple assignment not supported
+            exps = self.get(ExplistNode)
+            ventry = vars[0].children[0]
+            eentry = exps[0].children[0]
+            return ventry.gen() + "=" + eentry.gen()
         return "\n".join(map(lambda n: n.gen(), self.children))
+
+    def update_symbols(self):
+        vars = self.get(VarlistNode)
+        if vars:  # multiple assignment not supported
+            ventry = vars[0].children[0].children[0]  # a Token
+            assert isinstance(ventry, lark.Token)
+            self.symbol_table.insert(ventry.value, Symbol())
 
 
 class PrefixexpNode(ASTNode):
@@ -97,7 +122,7 @@ class IfStmtNode(ASTNode):
         if_body = indent(self.children[1].gen(), 1)
         if len(self.children) > 2:
             else_body = "else\n" + indent(self.children[2].gen(), 1)
-        return f"if [[ {cond} ]]; then\n" + if_body + "\n" + else_body + "\nfi\n"
+        return f"if [[ {cond} ]]; then\n{if_body}\n{else_body}\nfi\n"
 
 
 class FieldlistStar7Node(ASTNode):
@@ -176,7 +201,8 @@ class ParlistNode(ASTNode):
 
 
 class VarlistNode(ASTNode):
-    pass
+    def gen(self):
+        return "\n".join(map(lambda n: n.gen(), self.children))
 
 
 class ElseBlockNode(ASTNode):
@@ -227,13 +253,22 @@ def ast_from_lark(ast: lark.Tree) -> ASTNode:
     node = globals()[node_type]()
     assert isinstance(node, ASTNode)
     children = []
-    for c in ast.children:
+    clen = len(ast.children)
+    for i in range(clen):
+        c = ast.children[i]
         if isinstance(c, lark.Token):
             children += [c]
         else:
             cnode = ast_from_lark(c)
             cnode.parent = node
             cnode.symbol_table.parent = node.symbol_table
+            cnode.i = i
+            if i > 1:
+                prev = ast.children[i - 1]
+                cnode.prev = prev
+            if i < clen - 1:
+                next = ast.children[i + 1]
+                cnode.next = next
             children += [cnode]
     node.children = children
     node.name = ast.data
