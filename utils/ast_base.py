@@ -47,3 +47,6 @@ class ASTNode(ABC):
         """Default update behavior: call update on all AST children."""
         for c in self.child_nodes():
             c.update_symbols()
+
+    def is_a(self, t: Type) -> bool:
+        return isinstance(self, t)

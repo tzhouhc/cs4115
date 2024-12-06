@@ -65,6 +65,7 @@ class ChunkNode(ASTNode):
         return "\n".join(map(lambda n: n.gen(), self.children))
 
 
+# Labels and GOTOs are unsupported in zsh
 class LabelNode(ASTNode):
     pass
 
@@ -85,24 +86,55 @@ class VarlistStar4Node(ASTNode):
 
 class ExpNode(ASTNode):
     def gen(self):
-        if len(self.children) > 1:
+        if len(self.children) < 1:
+            return ""
+        first = self.children[0]
+        if isinstance(first, lark.Token):
+            if first.value == "nil":
+                return "\"\""
+            elif first.value == "false":
+                return "false"
+            elif first.value == "true":
+                return "true"
+            elif first.value == "...":
+                return "..."  # not actually handling this case
+            elif first.type == "NUMBER":
+                return first.value
+            else:
+                return "\"" + first.value + "\""
+        else:
             return " ".join([c.gen() for c in self.children])
-        c = self.children[0]
-        if isinstance(c, lark.Token):
-            return c.value
-        return c.gen()
 
 
 class StatNode(ASTNode):
-    def gen(self):
-        vars = self.get(VarlistNode)
-        if vars:  # multiple assignment not supported
+    def gen(self) -> str:
+        if len(self.children) < 1:
+            return ""
+        first = self.children[0]
+        if isinstance(self.children[0], lark.Token):
+            if first.value == ";":
+                return ";"
+            elif first.value == "break":
+                return "break"
+            elif first.value == "do":  # do block
+                return "do\n" + indent(self.children[1].gen(), 1) + \
+                    "\ndone"
+            elif first.value == "while":  # while
+                return "while ((" + self.children[1].get() + "))\ndo\n" + \
+                    indent(self.children[3].gen(), 1) + "\ndone"
+            elif first.value == "repeat":  # repeat until
+                return "while ! ((" + self.children[1].get() + "))\ndo\n" + \
+                    indent(self.children[3].gen(), 1) + "\ndone"
+        elif isinstance(first, VarlistNode):
+            vars = self.get(VarlistNode)
             exps = self.get(ExplistNode)
             ventry = vars[0].children[0]
             ventry.assign = True
             eentry = exps[0].children[0]
             return ventry.gen() + "=" + eentry.gen()
-        return "\n".join(map(lambda n: n.gen(), self.children))
+        else:
+            return first.gen()
+        return ""
 
     def update_symbols(self):
         vars = self.get(VarlistNode)
@@ -161,7 +193,14 @@ class FunctionDefNode(ASTNode):
 
 class ArgsNode(ASTNode):
     def gen(self):
-        return self.children[0].gen()
+        clen = len(self.children)
+        if clen > 1:
+            return self.children[1].gen()
+        else:
+            if isinstance(self.children[0], TableconstructorNode):
+                return ""  # table constructor not supported
+            else:
+                return '"' + self.children[0] + '"'
 
 
 class ExplistStar6Node(ASTNode):
@@ -198,7 +237,9 @@ class LocalAssignNode(ASTNode):
 
 
 class UnopNode(ASTNode):
-    pass
+    def gen(self):
+        assert isinstance(self.children[0], lark.Token)
+        return self.children[0].value
 
 
 class FieldsepNode(ASTNode):
@@ -234,7 +275,11 @@ class ExplistNode(ASTNode):
 
 class FunctioncallNode(ASTNode):
     def gen(self):
-        return self.children[0].gen() + f"({self.children[1].gen()})"
+        if len(self.children) == 2:
+            return "$(" + self.children[0].gen() + \
+                f"({self.children[1].gen()})" + ")"
+        else:
+            return ""  # zsh does not support objects or methods
 
 
 class IfStmtStar1Node(ASTNode):
