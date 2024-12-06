@@ -19,10 +19,18 @@ class ForInNode(ASTNode):
 
 
 class VarNode(ASTNode):
+    def __init__(self) -> None:
+        super().__init__()
+        # whether this var is being used on the LHS or the RHS
+        self.assign: bool = False
+
     def gen(self):
         # NAME
         if isinstance(self.children[0], lark.Token):
-            return self.children[0].value
+            if self.assign:
+                return self.children[0].value
+            else:
+                return "${" + self.children[0] + "}"
         # PREFIX[exp]
         if isinstance(self.children[2], ExpNode):
             return self.children[0].gen() + "[" + self.children[2].gen() + "]"
@@ -91,6 +99,7 @@ class StatNode(ASTNode):
         if vars:  # multiple assignment not supported
             exps = self.get(ExplistNode)
             ventry = vars[0].children[0]
+            ventry.assign = True
             eentry = exps[0].children[0]
             return ventry.gen() + "=" + eentry.gen()
         return "\n".join(map(lambda n: n.gen(), self.children))
