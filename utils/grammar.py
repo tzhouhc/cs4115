@@ -22,7 +22,9 @@ LARK_GRAMMAR = """
         | local_function
         | local_assign
 
+    // Done
     if_stmt: "if" exp "then" block elseif_block* else_block? "end"
+    // Done
     elseif_block: "elseif" exp "then" block
     // Done
     else_block: "else" block
@@ -32,9 +34,12 @@ LARK_GRAMMAR = """
     function_def: "function" funcname funcbody
     // Done
     local_function: "local" "function" NAME funcbody
+    // Done
     local_assign: "local" attnamelist ("=" explist)?
 
+    // Done
     attnamelist: NAME attrib ("," NAME attrib)*
+    // Done
     attrib: ("<" NAME ">")?
 
     // Done
@@ -43,6 +48,7 @@ LARK_GRAMMAR = """
     // Unsupported
     label: "::" NAME "::"
 
+    // Unsupported
     funcname: NAME ("." NAME)* (":" NAME)?
 
     // Done
@@ -50,6 +56,7 @@ LARK_GRAMMAR = """
     // Done
     var: NAME | prefixexp "[" exp "]" | prefixexp "." NAME
 
+    // Done
     namelist: NAME ("," NAME)*
     // Done
     explist: exp ("," exp)*
@@ -65,14 +72,16 @@ LARK_GRAMMAR = """
     // Done
     args: "(" explist? ")" | tableconstructor | STRING
 
+    // Done
     functiondef: "function" funcbody
     // Done
     funcbody: "(" parlist? ")" block "end"
+    // Done
     parlist: namelist ("," "...")? | "..."
 
     // Unsupported
     tableconstructor: "{" fieldlist? "}"
-
+    // Unsupported
     fieldlist: field (fieldsep field)* fieldsep?
     field: "[" exp "]" "=" exp | NAME "=" exp | exp
     fieldsep: "," | ";"

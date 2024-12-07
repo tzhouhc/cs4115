@@ -39,7 +39,8 @@ class ForRangeNode(ASTNode):
 
 
 class NamelistNode(ASTNode):
-    pass
+    def gen(self):
+        return " ".join(map(lambda n: n.gen(), self.children))
 
 
 class FieldlistNode(ASTNode):
@@ -240,8 +241,24 @@ class LocalFunctionNode(ASTNode):
         return f"function {name.value}() {{\n{declaration}\n{body_gen}\n}}\n"
 
 
+# Anonymous function
 class FunctiondefNode(ASTNode):
-    pass
+    def gen(self):
+        assert len(self.children) == 1
+        body = self.children[0]
+        # the children goes funcbody -> parlist -> namelist
+        declaration = ""
+        parslist = body.get_only(ParlistNode)
+        if parslist:
+            pars = parslist.children[0].children
+            declaration = ""
+            for i in range(0, len(pars)):
+                par = pars[i]
+                assert isinstance(par, lark.Token)
+                declaration += f"{par.value}=${i}\n"
+        declaration = indent(declaration, 1)
+        body_gen = indent(body.gen(), 1)
+        return f"function {{\n{declaration}\n{body_gen}\n}}\n"
 
 
 class LocalAssignNode(ASTNode):
@@ -311,7 +328,9 @@ class IfStmtStar1Node(ASTNode):
 
 
 class FuncnameNode(ASTNode):
-    pass
+    def gen(self):
+        return "\n".join(map(lambda n: n.gen(), self.children))
+        # zsh doesn't have classes and module-based func declarations
 
 
 class BinopNode(ASTNode):
