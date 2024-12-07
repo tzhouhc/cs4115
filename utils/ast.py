@@ -158,10 +158,18 @@ class IfStmtNode(ASTNode):
     def gen(self) -> str:
         cond = self.children[0].gen()
         else_body = ""
-        if_body = indent(self.children[1].gen(), 1)
+        if_body = indent(self.get_only(BlockNode).gen(), 1)
+        elif_body = "\n"
+        elifs = self.get(ElseifBlockNode)
+        if elifs:
+            for el_if in elifs:
+                elif_exp = el_if.get_only(ExpNode)
+                elif_body += "elif [[ " + elif_exp.gen() + " ]]; then\n"
+                elif_body += indent(el_if.gen(), 1) + "\n"
         if len(self.children) > 2:
-            else_body = "else\n" + indent(self.children[2].gen(), 1)
-        return f"if [[ {cond} ]]; then\n{if_body}\n{else_body}\nfi\n"
+            else_body = "else\n" + \
+                indent(self.get_only(ElseBlockNode).gen(), 1)
+        return f"if [[ {cond} ]]; then\n{if_body}{elif_body}{else_body}\nfi\n"
 
 
 class FieldlistStar7Node(ASTNode):
@@ -182,7 +190,8 @@ class AttnamelistNode(ASTNode):
 
 
 class ElseifBlockNode(ASTNode):
-    pass
+    def gen(self):
+        return self.get_only(BlockNode).gen()
 
 
 class FunctionDefNode(ASTNode):
@@ -243,9 +252,14 @@ class LocalAssignNode(ASTNode):
 
 
 class UnopNode(ASTNode):
+    __mapping = {
+        "!": "! "
+    }
+
     def gen(self):
-        assert isinstance(self.children[0], lark.Token)
-        return self.children[0].value
+        c0 = self.children[0]
+        assert isinstance(c0, lark.Token)
+        return self.__mapping.get(c0.value, c0.value)
 
 
 class FieldsepNode(ASTNode):
@@ -301,9 +315,21 @@ class FuncnameNode(ASTNode):
 
 
 class BinopNode(ASTNode):
+    __mapping = {
+        "==": "-eq",
+        "~=": "-ne",
+        ">": "-gt",
+        "<": "-lt",
+        ">=": "-ge",
+        "<=": "-le",
+        "and": "&&",
+        "or": "||",
+    }
+
     def gen(self):
-        assert isinstance(self.children[0], lark.Token)
-        return self.children[0].value
+        c0 = self.children[0]
+        assert isinstance(c0, lark.Token)
+        return self.__mapping.get(c0.value, c0.value)
 
 
 def snake_to_camel(name):
