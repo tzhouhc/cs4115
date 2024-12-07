@@ -11,6 +11,8 @@ class ASTNode(ABC):
         self.parent: Optional[ASTNode] = None
         self.children: List[Any] = []
         self.i: int
+        self.assign = False
+        self.capture = False
         self.prev: Optional[Union[ASTNode, Token]] = None
         self.next: Optional[Union[ASTNode, Token]] = None
 
@@ -50,3 +52,8 @@ class ASTNode(ABC):
 
     def is_a(self, t: Type) -> bool:
         return isinstance(self, t)
+
+    def set_recursive(self, name: str, val: Any) -> None:
+        self.__dict__[name] = val
+        for c in self.child_nodes():
+            c.set_recursive(name, val)

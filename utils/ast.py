@@ -19,11 +19,6 @@ class ForInNode(ASTNode):
 
 
 class VarNode(ASTNode):
-    def __init__(self) -> None:
-        super().__init__()
-        # whether this var is being used on the LHS or the RHS
-        self.assign: bool = False
-
     def gen(self):
         # NAME
         if isinstance(self.children[0], lark.Token):
@@ -32,11 +27,11 @@ class VarNode(ASTNode):
             else:
                 return "${" + self.children[0] + "}"
         # PREFIX[exp]
-        if isinstance(self.children[2], ExpNode):
-            return self.children[0].gen() + "[" + self.children[2].gen() + "]"
+        if isinstance(self.children[1], ExpNode):
+            return self.children[0].gen() + "[" + self.children[1].gen() + "]"
         # PREFIX.NAME
         else:
-            return self.children[0].gen() + "." + self.children[2].value
+            return self.children[0].gen() + "." + self.children[1].value
 
 
 class ForRangeNode(ASTNode):
@@ -72,7 +67,7 @@ class LabelNode(ASTNode):
 
 class FuncbodyNode(ASTNode):
     def gen(self):
-        return "\n".join(map(lambda n: n.gen(), self.children[1:]))
+        return self.get_only(BlockNode).gen()
 
     def update_symbols(self):
         params = self.get_only(ParlistNode).get_only(NamelistNode)
@@ -101,7 +96,7 @@ class ExpNode(ASTNode):
             elif first.type == "NUMBER":
                 return first.value
             else:
-                return "\"" + first.value + "\""
+                return first.value
         else:
             return " ".join([c.gen() for c in self.children])
 
@@ -132,6 +127,9 @@ class StatNode(ASTNode):
             ventry.assign = True
             eentry = exps[0].children[0]
             return ventry.gen() + "=" + eentry.gen()
+        elif isinstance(first, FunctioncallNode):
+            first.set_recursive("assign", True)
+            return first.gen()
         else:
             return first.gen()
         return ""
@@ -140,8 +138,8 @@ class StatNode(ASTNode):
         vars = self.get(VarlistNode)
         if vars:  # multiple assignment not supported
             ventry = vars[0].children[0].children[0]  # a Token
-            assert isinstance(ventry, lark.Token)
-            self.symbol_table.insert(ventry.value, Symbol())
+            if isinstance(ventry, lark.Token):
+                self.symbol_table.insert(ventry.value, Symbol())
 
 
 class PrefixexpNode(ASTNode):
@@ -194,13 +192,15 @@ class FunctionDefNode(ASTNode):
 class ArgsNode(ASTNode):
     def gen(self):
         clen = len(self.children)
+        if clen == 0:
+            return ""
         if clen > 1:
             return self.children[1].gen()
         else:
             if isinstance(self.children[0], TableconstructorNode):
                 return ""  # table constructor not supported
             else:
-                return '"' + self.children[0] + '"'
+                return self.children[0].gen()
 
 
 class ExplistStar6Node(ASTNode):
@@ -217,12 +217,15 @@ class LocalFunctionNode(ASTNode):
         name, body = self.children
         assert isinstance(name, lark.Token)
         # the children goes funcbody -> parlist -> namelist
-        pars = body.children[0].children[0].children
         declaration = ""
-        for i in range(0, len(pars)):
-            par = pars[i]
-            assert isinstance(par, lark.Token)
-            declaration += f"{par.value}=${i}\n"
+        parslist = body.get_only(ParlistNode)
+        if parslist:
+            pars = parslist.children[0].children
+            declaration = ""
+            for i in range(0, len(pars)):
+                par = pars[i]
+                assert isinstance(par, lark.Token)
+                declaration += f"{par.value}=${i}\n"
         declaration = indent(declaration, 1)
         body_gen = indent(body.gen(), 1)
         return f"function {name.value}() {{\n{declaration}\n{body_gen}\n}}\n"
@@ -233,7 +236,10 @@ class FunctiondefNode(ASTNode):
 
 
 class LocalAssignNode(ASTNode):
-    pass
+    def gen(self):
+        attr = self.get_only(AttnamelistNode)
+        exps = self.get_only(ExplistNode)
+        return attr.children[0].value + "=" + exps.gen()
 
 
 class UnopNode(ASTNode):
@@ -274,10 +280,14 @@ class ExplistNode(ASTNode):
 
 
 class FunctioncallNode(ASTNode):
-    def gen(self):
+    def gen(self) -> str:
         if len(self.children) == 2:
-            return "$(" + self.children[0].gen() + \
-                f"({self.children[1].gen()})" + ")"
+            if self.capture:  # want the result wrapped
+                return "$(" + self.children[0].gen() + \
+                    " ".join(self.children[1].gen()) + ")"
+            else:
+                return self.children[0].gen() + " " + \
+                    self.children[1].gen()
         else:
             return ""  # zsh does not support objects or methods
 
