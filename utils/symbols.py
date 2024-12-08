@@ -38,19 +38,16 @@ class SymbolTable:
         # i.e. can lookup in previous nodes
 
     def lookup(self, name):
-        res = None
         # Look in current scope
         if name in self.symbols:
             return self.symbols[name]
         # if sequential symbol table, check previous node for definition.
         if self.sequential and self.node.prev:
-            res = self.node.prev.lookup(name)
-            if res:
+            if res := self.node.prev.lookup(name):
                 return res
         # Look in parent scope if it exists
         if self.parent:
-            res = self.parent.lookup(name)
-            if res:
+            if res := self.parent.lookup(name):
                 return res
         # if nothing found, check if this is a binary on PATH
         return PATH_BIN_SYMS.get(name, None)

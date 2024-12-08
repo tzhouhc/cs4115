@@ -61,6 +61,9 @@ class BlockNode(ASTNode):
     def gen(self):
         return "\n".join(map(lambda n: n.gen(), self.children))
 
+    def get_type(self):
+        return self.get_only(RetstatNode).get_type()
+
 
 class ChunkNode(ASTNode):
     def gen(self):
@@ -102,6 +105,23 @@ class ExpNode(ASTNode):
         else:
             return " ".join([c.gen() for c in self.children])
 
+    def get_type(self):
+        first = self.children[0]
+        if isinstance(first, lark.Token):
+            if first.value == "nil":
+                return "string"
+            elif first.value == "false":
+                return "bool"
+            elif first.value == "true":
+                return "bool"
+            elif first.type == "NUMBER":
+                return "number"
+            elif first.type == "STRING":
+                return "string"
+        else:
+            return first.get_type()
+        return "unknown"
+
 
 class StatNode(ASTNode):
     def gen(self) -> str:
@@ -142,11 +162,14 @@ class StatNode(ASTNode):
     def get_symbols(self):
         if self.has(LocalAssignNode):
             return self.get_only(LocalAssignNode).get_symbols()
+        if self.has(LocalFunctionNode):
+            return self.get_only(LocalFunctionNode).get_symbols()
         vars = self.get(VarlistNode)
         if not vars:
             return []
         ventry = vars[0].children[0].children[0]
-        sym = Symbol(ventry.value, "unknown")
+        exp = self.get_only(ExplistNode)
+        sym = Symbol(ventry.value, exp.get_type())
         return [sym]
 
     def update_symbols(self):
@@ -163,6 +186,11 @@ class PrefixexpNode(ASTNode):
         if self.children[0].is_a(FunctioncallNode):
             self.children[0].set_recursive('capture', True)
         return self.children[0].gen()
+
+    def get_type(self):
+        if (n := self.get(VarNode)):
+            return n[0].get_type()
+        return "unknown"
 
 
 class AttnamelistStar2Node(ASTNode):
@@ -198,6 +226,10 @@ class FieldNode(ASTNode):
 class RetstatNode(ASTNode):
     def gen(self):
         return "echo " + self.children[0].gen()
+
+    def update_symbols(self):
+        self.symbol_table.sequential = True
+        super().update_symbols()
 
 
 class AttnamelistNode(ASTNode):
@@ -269,10 +301,27 @@ class LocalFunctionNode(ASTNode):
             for i in range(0, len(pars)):
                 par = pars[i]
                 assert isinstance(par, lark.Token)
-                declaration += f"{par.value}=${i}\n"
+                declaration += f"{par.value}=${i + 1}\n"
         declaration = indent(declaration, 1)
         body_gen = indent(body.gen(), 1)
         return f"function {name.value}() {{\n{declaration}\n{body_gen}\n}}\n"
+
+    def get_symbols(self):
+        assert len(self.children) == 2
+        name, _ = self.children
+        return [Symbol(name, "function")]
+
+    def update_symbols(self):
+        syms = self.get_symbols()
+        _, body = self.children
+        parslist = body.get_only(ParlistNode)
+        if parslist:
+            pars = parslist.children[0].children
+            for i in range(0, len(pars)):
+                par = pars[i]
+                syms += [Symbol(par.value, "unknown")]
+        self.symbol_table.insert(syms)  # recursion possible
+        super().update_symbols()
 
 
 # Anonymous function

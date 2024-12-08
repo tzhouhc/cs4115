@@ -44,6 +44,12 @@ class ASTNode(ABC):
         assert len(found) == 1
         return found[0]
 
+    def get_type(self) -> str:
+        """Return the expected type of the node if it can hold one."""
+        if len(cnodes := self.child_nodes()) == 1:
+            return cnodes[0].get_type()
+        return "string"
+
     def trace(self) -> str:
         if self.parent:
             return self.parent.trace() + " -> " + self.name
