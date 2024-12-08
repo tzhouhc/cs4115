@@ -86,7 +86,8 @@ class BlockNode(ASTNode):
 
 class ChunkNode(ASTNode):
     def gen(self):
-        return "\n".join(map(lambda n: n.gen(), self.children))
+        prelim = "\n".join(map(lambda n: n.gen(), self.children))
+        return '\n'.join(line for line in prelim.splitlines() if line.strip())
 
 
 # Labels and GOTOs are unsupported in zsh
