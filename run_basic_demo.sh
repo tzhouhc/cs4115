@@ -18,6 +18,8 @@ while IFS= read -r line || [ -n "$line" ]; do
         continue
     fi
 
+    clear
+
     echo -e "${BLUE}Running lexer on '${line}'${NC}"
     out=$(python3 main.py "${line}")
 
