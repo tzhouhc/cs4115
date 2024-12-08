@@ -68,6 +68,7 @@ class ASTNode(ABC):
         return isinstance(self, t)
 
     def set_recursive(self, name: str, val: Any) -> None:
+        print(f"recursively setting on {self.name}")
         self.__dict__[name] = val
         for c in self.child_nodes():
             c.set_recursive(name, val)

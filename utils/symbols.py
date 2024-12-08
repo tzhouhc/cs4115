@@ -17,6 +17,9 @@ class Symbol:
     def use(self):
         self.used = True
 
+    def __str__(self) -> str:
+        return f"{self.name}: {self.type}"
+
 
 PATH_BIN_SYMS: dict[str, 'Symbol'] = {}
 for name in PATH_BINS:

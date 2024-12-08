@@ -22,14 +22,18 @@ class VarNode(ASTNode):
     def gen(self):
         # NAME
         if isinstance(self.children[0], lark.Token):
-            if self.assign:
-                return self.children[0].value
+            name = self.children[0].value
+            sym = self.lookup(name)
+            if sym and sym.type == "function":
+                return name
+            elif self.assign:
+                return name
             else:
-                return "${" + self.children[0] + "}"
-        # PREFIX[exp]
+                return "${" + name + "}"
+        # PREFIX[exp]; unsupported
         if isinstance(self.children[1], ExpNode):
             return self.children[0].gen() + "[" + self.children[1].gen() + "]"
-        # PREFIX.NAME
+        # PREFIX.NAME; unsupported
         else:
             return self.children[0].gen() + "." + self.children[1].value
 
@@ -108,11 +112,13 @@ class StatNode(ASTNode):
         if len(self.children) < 1:
             return ""
         first = self.children[0]
-        if isinstance(self.children[0], lark.Token):
+        if isinstance(first, lark.Token):
             if first.value == ";":
                 return ";"
         elif first.is_a(BreakNode):
             return "break"
+        elif first.is_a(GotoNode):  # not supported
+            return "goto"
         elif first.is_a(DoNode):
             return "do\n" + indent(self.children[1].gen(), 1) + \
                 "\ndone"
@@ -122,15 +128,18 @@ class StatNode(ASTNode):
         elif first.is_a(RepeatNode):
             return "while ! ((" + self.children[1].gen() + "))\ndo\n" + \
                 indent(self.children[2].gen(), 1) + "\ndone"
-        elif isinstance(first, VarlistNode):
+        elif first.is_a(VarlistNode):
             vars = self.get(VarlistNode)
             exps = self.get(ExplistNode)
             ventry = vars[0].children[0]
             ventry.assign = True
             eentry = exps[0].children[0]
-            return ventry.gen() + "=" + eentry.gen()
-        elif isinstance(first, FunctioncallNode):
-            first.set_recursive("assign", True)
+            # TODO: handle RHS cases between
+            # - simple expression: $exp
+            # - string of multiple components: ""
+            # - function output: $()
+            return ventry.gen() + "=\"" + eentry.gen() + '"'  # safe
+        elif first.is_a(FunctioncallNode):
             return first.gen()
         else:
             return first.gen()
@@ -156,8 +165,9 @@ class PrefixexpNode(ASTNode):
     def gen(self) -> str:
         if len(self.children) > 1:  # parens
             return "(" + self.children[1].gen() + ")"
-        else:
-            return self.children[0].gen()
+        if self.children[0].is_a(FunctioncallNode):
+            self.children[0].set_recursive('capture', True)
+        return self.children[0].gen()
 
 
 class AttnamelistStar2Node(ASTNode):
@@ -350,7 +360,7 @@ class FunctioncallNode(ASTNode):
         if len(self.children) == 2:
             if self.capture:  # want the result wrapped
                 return "$(" + self.children[0].gen() + " " + \
-                    " ".join(self.children[1].gen()) + ")"
+                    self.children[1].gen() + ")"
             else:
                 return self.children[0].gen() + " " + \
                     self.children[1].gen()
