@@ -11,6 +11,7 @@ class Symbol:
         self.type: str = type
         self.is_initialized = False
         self.used = False
+        self.used_at: Any = None
         self.source: Any = None
         self.scope_level: int = 0  # Useful for optimization later
         self.first_reference = None  # Line number/position
@@ -18,8 +19,10 @@ class Symbol:
     def init(self):
         self.is_initialized = True
 
-    def use(self):
-        self.used = True
+    def use(self, at=None):
+        if at != self.source:
+            self.used = True
+            self.used_at = at
 
     def __str__(self) -> str:
         return f"{self.name}: {self.type}"

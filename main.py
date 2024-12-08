@@ -65,7 +65,8 @@ def main() -> int:
     my_ast = ast.ast_from_lark(lark_ast)
     my_ast.update_symbols()
     my_ast.gen()
-    my_ast.clean_up()
+    unused = my_ast.get_unused_symbols()
+    my_ast.clean_up(unused)
     print(my_ast.gen())
     return 0
 

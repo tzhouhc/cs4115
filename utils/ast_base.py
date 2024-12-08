@@ -1,6 +1,7 @@
 from abc import ABC
 from typing import Any, List, Optional, Type, Callable, Union
 from .symbols import Symbol, SymbolTable
+from functools import lru_cache
 from lark import Token
 
 
@@ -50,6 +51,9 @@ class ASTNode(ABC):
             return cnodes[0].get_type()
         return "string"
 
+    def use(self, sym: Symbol) -> None:
+        sym.use(self)
+
     def trace(self) -> str:
         if self.parent:
             return self.parent.trace() + " -> " + self.name
@@ -57,6 +61,9 @@ class ASTNode(ABC):
 
     def lookup(self, name: str) -> Optional[Symbol]:
         return self.symbol_table.lookup(name)
+
+    def remove(self, node: 'ASTNode') -> None:
+        self.children = [c for c in self.children if c != node]
 
     def map(self, f: Callable[['ASTNode'], Any]) -> List[Any]:
         """Return result of calling function on all children."""
@@ -66,6 +73,7 @@ class ASTNode(ABC):
         """Return result of calling function on all AST children."""
         return list(map(f, self.child_nodes()))
 
+    @lru_cache
     def get_symbols(self) -> List['Symbol']:
         """Return the new symbols generated in this node."""
         return []
@@ -98,7 +106,6 @@ class ASTNode(ABC):
             unused += child.get_unused_symbols()
         return unused
 
-    def clean_up(self):
-        unused = self.get_unused_symbols()
-        for u in unused:
-            print(u.source)
+    def clean_up(self, unused: List[Symbol]):
+        for c in self.child_nodes():
+            c.clean_up(unused)

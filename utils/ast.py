@@ -1,5 +1,7 @@
 import lark
+from functools import lru_cache
 from .ast_base import ASTNode
+from .symbols import Symbol
 from .errors import UnknownVariableError
 
 
@@ -24,12 +26,17 @@ class VarNode(ASTNode):
         if isinstance(self.children[0], lark.Token):
             name = self.children[0].value
             sym = self.lookup(name)
-            if not sym and not self.assign:
-                raise UnknownVariableError
-            elif (sym and sym.type == "function") or self.assign:
-                return name
+            if not sym:
+                if not self.assign:
+                    raise UnknownVariableError
+                else:
+                    return name
             else:
-                return "${" + name + "}"
+                self.use(sym)
+                if (sym.type == "function") or self.assign:
+                    return name
+                else:
+                    return "${" + name + "}"
 
         # PREFIX[exp]; unsupported
         if isinstance(self.children[1], ExpNode):
@@ -62,6 +69,19 @@ class BlockNode(ASTNode):
 
     def get_type(self):
         return self.get_only(RetstatNode).get_type()
+
+    def filter_unused_stat(self, node: ASTNode, s: Symbol) -> bool:
+        if not isinstance(node, StatNode):
+            return True
+        if s not in node.get_symbols():
+            return True
+        return False
+
+    def clean_up(self, unused):
+        for u in unused:
+            self.children = list(filter(
+                lambda x: self.filter_unused_stat(x, u), self.children))
+        super().clean_up(unused)
 
 
 class ChunkNode(ASTNode):
@@ -147,10 +167,6 @@ class StatNode(ASTNode):
             var = self.get_only(VarlistNode)
             exp = self.get_only(ExplistNode)
             var.set_recursive('assign', True)
-            # TODO: handle RHS cases between
-            # - simple expression: $exp
-            # - string of multiple components: ""
-            # - function output: $()
             return var.gen() + "=\"" + exp.gen() + '"'  # safe
         elif first.is_a(FunctioncallNode):
             return first.gen()
@@ -158,6 +174,7 @@ class StatNode(ASTNode):
             return first.gen()
         return ""
 
+    @lru_cache
     def get_symbols(self):
         if self.has(LocalAssignNode):
             return self.get_only(LocalAssignNode).get_symbols()
@@ -166,9 +183,10 @@ class StatNode(ASTNode):
         vars = self.get(VarlistNode)
         if not vars:
             return []
-        ventry = vars[0].children[0].children[0]
+        var = vars[0].children[0]
+        ventry = var.children[0]
         exp = self.get_only(ExplistNode)
-        sym = self.make_symbol(ventry.value, exp.get_type())
+        sym = var.make_symbol(ventry.value, exp.get_type())
         return [sym]
 
     def update_symbols(self):
@@ -305,6 +323,7 @@ class LocalFunctionNode(ASTNode):
         body_gen = indent(body.gen(), 1)
         return f"function {name.value}() {{\n{declaration}\n{body_gen}\n}}\n"
 
+    @lru_cache
     def get_symbols(self):
         assert len(self.children) == 2
         name, _ = self.children
@@ -349,6 +368,7 @@ class LocalAssignNode(ASTNode):
         exps = self.get_only(ExplistNode)
         return attr.children[0].value + "=" + exps.gen()
 
+    @lru_cache
     def get_symbols(self):
         attr = self.get_only(AttnamelistNode)
         # exps = self.get_only(ExplistNode)
