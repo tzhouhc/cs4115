@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from utils import ast, parser
+from utils import ast, parser, errors
 from argparse import ArgumentParser, BooleanOptionalAction
 import logging
 import sys
@@ -64,10 +64,14 @@ def main() -> int:
     # generator = code_gen.CodeGenerator(ast)
     my_ast = ast.ast_from_lark(lark_ast)
     my_ast.update_symbols()
-    my_ast.gen()
-    unused = my_ast.get_unused_symbols()
-    my_ast.clean_up(unused)
-    print(my_ast.gen())
+    try:
+        my_ast.gen()
+        unused = my_ast.get_unused_symbols()
+        my_ast.clean_up(unused)
+        print(my_ast.gen())
+    except errors.GenerationError as e:
+        print(e)
+        exit(1)
     return 0
 
 

@@ -28,7 +28,7 @@ class VarNode(ASTNode):
             sym = self.lookup(name)
             if not sym:
                 if not self.assign:
-                    raise UnknownVariableError
+                    raise UnknownVariableError(name, self)
                 else:
                     return name
             else:
