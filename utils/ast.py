@@ -1,6 +1,5 @@
 import lark
 from .ast_base import ASTNode
-from .symbols import Symbol
 from .errors import UnknownVariableError
 
 
@@ -169,7 +168,7 @@ class StatNode(ASTNode):
             return []
         ventry = vars[0].children[0].children[0]
         exp = self.get_only(ExplistNode)
-        sym = Symbol(ventry.value, exp.get_type())
+        sym = self.make_symbol(ventry.value, exp.get_type())
         return [sym]
 
     def update_symbols(self):
@@ -309,7 +308,7 @@ class LocalFunctionNode(ASTNode):
     def get_symbols(self):
         assert len(self.children) == 2
         name, _ = self.children
-        return [Symbol(name, "function")]
+        return [self.make_symbol(name, "function")]
 
     def update_symbols(self):
         syms = self.get_symbols()
@@ -319,7 +318,7 @@ class LocalFunctionNode(ASTNode):
             pars = parslist.children[0].children
             for i in range(0, len(pars)):
                 par = pars[i]
-                syms += [Symbol(par.value, "unknown")]
+                syms += [self.make_symbol(par.value, "unknown")]
         self.symbol_table.insert(syms)  # recursion possible
         super().update_symbols()
 
@@ -353,7 +352,7 @@ class LocalAssignNode(ASTNode):
     def get_symbols(self):
         attr = self.get_only(AttnamelistNode)
         # exps = self.get_only(ExplistNode)
-        res = Symbol(attr.children[0].value, "unknown")
+        res = self.make_symbol(attr.children[0].value, "unknown")
         return [res]
 
 

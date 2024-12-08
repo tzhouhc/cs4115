@@ -82,3 +82,22 @@ class ASTNode(ABC):
         self.__dict__[name] = val
         for c in self.child_nodes():
             c.set_recursive(name, val)
+
+    def make_symbol(self, name: str, type: str):
+        sym = Symbol(name, type)
+        sym.source = self
+        return sym
+
+    def get_unused_symbols(self) -> List[Symbol]:
+        unused = []
+        for symbol in self.symbol_table.symbols.values():
+            if not symbol.used and symbol.is_initialized \
+                    and symbol.type != "function":
+                unused += [symbol]
+        # Recursively check child nodes' symbol tables
+        for child in self.child_nodes():
+            unused += child.get_unused_symbols()
+        return unused
+
+    def clean_up(self):
+        pass

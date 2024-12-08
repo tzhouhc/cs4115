@@ -8,6 +8,7 @@ class Symbol:
         self.type: str = type
         self.is_initialized = False
         self.used = False
+        self.source: Any = None
         self.scope_level: int = 0  # Useful for optimization later
         self.first_reference = None  # Line number/position
 
