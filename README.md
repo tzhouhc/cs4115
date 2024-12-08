@@ -49,7 +49,7 @@ more verbose logging. Use the `-t` flag for printing the parse tree.
 
 ## Video
 
-[Video link to Google Drive]()
+[Video link to Google Drive](https://drive.google.com/file/d/1NQZz1_kdZ7L0GkGI0rx5SVgOAcTeQmnu/view?usp=sharing)
 
 - A brief look into the files.
 - A run of the script, which runs the unit tests, and some sample programs.
