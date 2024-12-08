@@ -64,6 +64,8 @@ def main() -> int:
     # generator = code_gen.CodeGenerator(ast)
     my_ast = ast.ast_from_lark(lark_ast)
     my_ast.update_symbols()
+    my_ast.gen()
+    my_ast.clean_up()
     print(my_ast.gen())
     return 0
 

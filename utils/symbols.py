@@ -1,5 +1,8 @@
+import logging
 from .lib import PATH_BINS
 from typing import Any
+
+logger = logging.getLogger()
 
 
 class Symbol:
@@ -53,9 +56,7 @@ class SymbolTable:
         # if nothing found, check if this is a binary on PATH
         return PATH_BIN_SYMS.get(name, None)
 
-    def insert(self, symbol):
-        if isinstance(symbol, list):
-            for sym in symbol:
-                self.symbols[sym.name] = sym
-        else:
-            self.symbols[symbol.name] = symbol
+    def insert(self, symbols: list['Symbol']):
+        for sym in symbols:
+            logger.debug(f"Inserted symbol {str(sym)}")
+            self.symbols[sym.name] = sym

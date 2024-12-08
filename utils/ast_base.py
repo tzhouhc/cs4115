@@ -91,8 +91,7 @@ class ASTNode(ABC):
     def get_unused_symbols(self) -> List[Symbol]:
         unused = []
         for symbol in self.symbol_table.symbols.values():
-            if not symbol.used and symbol.is_initialized \
-                    and symbol.type != "function":
+            if not symbol.used:
                 unused += [symbol]
         # Recursively check child nodes' symbol tables
         for child in self.child_nodes():
@@ -100,4 +99,6 @@ class ASTNode(ABC):
         return unused
 
     def clean_up(self):
-        pass
+        unused = self.get_unused_symbols()
+        for u in unused:
+            print(u.source)
