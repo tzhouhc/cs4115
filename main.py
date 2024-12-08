@@ -43,6 +43,8 @@ def arg_parser() -> ArgumentParser:
     parser.add_argument('-v', '--verbose', action='count', default=0,
                         help="Increase verbosity (can be used multiple times)")
     parser.add_argument("--whitespace", action=BooleanOptionalAction)
+    parser.add_argument("-t", "--tree", action=BooleanOptionalAction,
+                        help="Print the parsed AST.")
     return parser
 
 
@@ -53,9 +55,10 @@ def main() -> int:
     lark_parser = parser.PARSER
     try:
         lark_ast = lark_parser.parse(args.text)
-        print(lark_ast.pretty())
+        if args.tree:
+            print(lark_ast.pretty())
     except lark.exceptions.LarkError as e:
-        print(e)
+        print(f"Lexing/Parsing error: {e}")
         exit(1)
     assert lark_ast is not None
     # generator = code_gen.CodeGenerator(ast)

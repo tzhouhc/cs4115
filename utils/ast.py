@@ -1,6 +1,6 @@
 import lark
 from .ast_base import ASTNode
-from .symbols import Symbol, SymbolTable
+from .symbols import Symbol
 
 
 INDENT = "  "
@@ -71,9 +71,10 @@ class FuncbodyNode(ASTNode):
         return self.get_only(BlockNode).gen()
 
     def update_symbols(self):
-        params = self.get_only(ParlistNode).get_only(NamelistNode)
-        for c in params.children:
-            self.symbol_table.insert(c, Symbol())
+        pass
+        # params = self.get_only(ParlistNode).get_only(NamelistNode)
+        # for c in params.children:
+        #     self.symbol_table.insert(c, Symbol())
 
 
 class VarlistStar4Node(ASTNode):
@@ -135,12 +136,20 @@ class StatNode(ASTNode):
             return first.gen()
         return ""
 
-    def update_symbols(self):
+    def get_symbols(self):
+        if self.has(LocalAssignNode):
+            return self.get_only(LocalAssignNode).get_symbols()
         vars = self.get(VarlistNode)
-        if vars:  # multiple assignment not supported
-            ventry = vars[0].children[0].children[0]  # a Token
-            if isinstance(ventry, lark.Token):
-                self.symbol_table.insert(ventry.value, Symbol())
+        if not vars:
+            return []
+        ventry = vars[0].children[0]
+        sym = Symbol(ventry.gen(), "unknown")
+        return [sym]
+
+    def update_symbols(self):
+        self.symbol_table.sequential = True
+        syms = self.get_symbols()
+        self.symbol_table.insert(syms)
 
 
 class PrefixexpNode(ASTNode):
@@ -267,6 +276,12 @@ class LocalAssignNode(ASTNode):
         exps = self.get_only(ExplistNode)
         return attr.children[0].value + "=" + exps.gen()
 
+    def get_symbols(self):
+        attr = self.get_only(AttnamelistNode)
+        # exps = self.get_only(ExplistNode)
+        res = Symbol(attr.children[0].value, "unknown")
+        return [res]
+
 
 class UnopNode(ASTNode):
     __mapping = {
@@ -372,13 +387,12 @@ def ast_from_lark(ast: lark.Tree) -> ASTNode:
             cnode.parent = node
             cnode.symbol_table.parent = node.symbol_table
             cnode.i = i
-            if i > 1:
-                prev = ast.children[i - 1]
-                cnode.prev = prev
-            if i < clen - 1:
-                next = ast.children[i + 1]
-                cnode.next = next
             children += [cnode]
     node.children = children
     node.name = ast.data
+    cnodes = node.child_nodes()
+    for i in range(0, len(cnodes) - 1):
+        cnodes[i].next = cnodes[i + 1]
+        cnodes[i + 1].prev = cnodes[i]
+
     return node
