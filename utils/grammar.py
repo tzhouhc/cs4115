@@ -6,7 +6,7 @@ LARK_GRAMMAR = """
     block: stat* retstat?
 
     // Done
-    stat: ";"
+    stat: semicolon
         | varlist "=" explist
         | functioncall
         | label
@@ -23,6 +23,7 @@ LARK_GRAMMAR = """
         | local_assign
 
 
+    semicolon: ";"
     break: "break"
     goto: "goto"
     do: "do"

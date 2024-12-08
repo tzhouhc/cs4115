@@ -148,9 +148,8 @@ class StatNode(ASTNode):
         if len(self.children) < 1:
             return ""
         first = self.children[0]
-        if isinstance(first, lark.Token):
-            if first.value == ";":
-                return ";"
+        if first.is_a(SemicolonNode):
+            return "\n"
         elif first.is_a(BreakNode):
             return "break"
         elif first.is_a(GotoNode):  # not supported
@@ -286,6 +285,10 @@ class DoNode(ASTNode):
 
 
 class GotoNode(ASTNode):
+    pass
+
+
+class SemicolonNode(ASTNode):
     pass
 
 
