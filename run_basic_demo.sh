@@ -19,12 +19,19 @@ while IFS= read -r line || [ -n "$line" ]; do
     fi
 
     echo -e "${BLUE}Running lexer on '${line}'${NC}"
-    python3 main.py "${line}"
+    out=$(python3 main.py "${line}")
 
     # Check the exit status of main.py
     if [ $? -ne 0 ]; then
         echo -e "${YELLOW}Warning: main.py returned non-zero exit status for line: $line${NC}"
+        echo "${out}"
+    else
+        echo "${out}"
+
+        echo -e "${BLUE}Output:${NC}"
+        echo $(eval "${out}")
     fi
+
 
     pause
 

@@ -455,6 +455,7 @@ class BinopNode(ASTNode):
         "<=": "-le",
         "and": "&&",
         "or": "||",
+        "+": "+",
     }
 
     def gen(self):

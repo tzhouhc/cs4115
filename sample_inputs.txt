@@ -1,8 +1,8 @@
-a = 3
+a = 3; echo(a)
 a = 2; b = 3; a = a + b
 a = 2; b = 3; a = a 和 b
-a = 3; while a < 10 do local a = a + 1 end
+local a = 3; if a < 10 then echo(a) else echo("nope") end
 a = 3; while a < 10 do local a = a + 1
-local function a(n) return n + 1 end return a(2)
-local function a(n) c = 2; return n + 1 end return a(2)
-local function a(n) ls(c); return n + 1 end return a(2)
+local function a(n) return n + "world" end return a("hello")
+local function a(n) c = 2; return n + "world" end return a("hello")
+local function a(n) ls(c); return n + "world" end return a("hello")
