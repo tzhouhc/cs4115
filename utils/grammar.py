@@ -10,17 +10,24 @@ LARK_GRAMMAR = """
         | varlist "=" explist
         | functioncall
         | label
-        | "break"
-        | "goto" NAME
-        | "do" block "end"
-        | "while" exp "do" block "end"
-        | "repeat" block "until" exp
+        | break
+        | goto NAME
+        | do block "end"
+        | while exp "do" block "end"
+        | repeat block "until" exp
         | if_stmt
         | for_range
         | for_in
         | function_def
         | local_function
         | local_assign
+
+
+    break: "break"
+    goto: "goto"
+    do: "do"
+    while: "while"
+    repeat: "repeat"
 
     // Done
     if_stmt: "if" exp "then" block elseif_block* else_block? "end"

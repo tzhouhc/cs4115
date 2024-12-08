@@ -111,17 +111,17 @@ class StatNode(ASTNode):
         if isinstance(self.children[0], lark.Token):
             if first.value == ";":
                 return ";"
-            elif first.value == "break":
-                return "break"
-            elif first.value == "do":  # do block
-                return "do\n" + indent(self.children[1].gen(), 1) + \
-                    "\ndone"
-            elif first.value == "while":  # while
-                return "while ((" + self.children[1].get() + "))\ndo\n" + \
-                    indent(self.children[3].gen(), 1) + "\ndone"
-            elif first.value == "repeat":  # repeat until
-                return "while ! ((" + self.children[1].get() + "))\ndo\n" + \
-                    indent(self.children[3].gen(), 1) + "\ndone"
+        elif first.is_a(BreakNode):
+            return "break"
+        elif first.is_a(DoNode):
+            return "do\n" + indent(self.children[1].gen(), 1) + \
+                "\ndone"
+        elif first.is_a(WhileNode):
+            return "while [[ " + self.children[1].gen() + " ]]; do\n" + \
+                indent(self.children[2].gen(), 1) + "\ndone"
+        elif first.is_a(RepeatNode):
+            return "while ! ((" + self.children[1].gen() + "))\ndo\n" + \
+                indent(self.children[2].gen(), 1) + "\ndone"
         elif isinstance(first, VarlistNode):
             vars = self.get(VarlistNode)
             exps = self.get(ExplistNode)
@@ -220,6 +220,26 @@ class ArgsNode(ASTNode):
                 return ""  # table constructor not supported
             else:
                 return self.children[0].gen()
+
+
+class WhileNode(ASTNode):
+    pass
+
+
+class DoNode(ASTNode):
+    pass
+
+
+class GotoNode(ASTNode):
+    pass
+
+
+class BreakNode(ASTNode):
+    pass
+
+
+class RepeatNode(ASTNode):
+    pass
 
 
 class ExplistStar6Node(ASTNode):
@@ -329,7 +349,7 @@ class FunctioncallNode(ASTNode):
     def gen(self) -> str:
         if len(self.children) == 2:
             if self.capture:  # want the result wrapped
-                return "$(" + self.children[0].gen() + \
+                return "$(" + self.children[0].gen() + " " + \
                     " ".join(self.children[1].gen()) + ")"
             else:
                 return self.children[0].gen() + " " + \
