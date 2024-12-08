@@ -1,6 +1,7 @@
 import lark
 from .ast_base import ASTNode
 from .symbols import Symbol
+from .errors import UnknownVariableError
 
 
 INDENT = "  "
@@ -24,12 +25,13 @@ class VarNode(ASTNode):
         if isinstance(self.children[0], lark.Token):
             name = self.children[0].value
             sym = self.lookup(name)
-            if sym and sym.type == "function":
-                return name
-            elif self.assign:
+            if not sym and not self.assign:
+                raise UnknownVariableError
+            elif (sym and sym.type == "function") or self.assign:
                 return name
             else:
                 return "${" + name + "}"
+
         # PREFIX[exp]; unsupported
         if isinstance(self.children[1], ExpNode):
             return self.children[0].gen() + "[" + self.children[1].gen() + "]"
@@ -73,12 +75,6 @@ class LabelNode(ASTNode):
 class FuncbodyNode(ASTNode):
     def gen(self):
         return self.get_only(BlockNode).gen()
-
-    def update_symbols(self):
-        pass
-        # params = self.get_only(ParlistNode).get_only(NamelistNode)
-        # for c in params.children:
-        #     self.symbol_table.insert(c, Symbol())
 
 
 class VarlistStar4Node(ASTNode):
@@ -129,16 +125,14 @@ class StatNode(ASTNode):
             return "while ! ((" + self.children[1].gen() + "))\ndo\n" + \
                 indent(self.children[2].gen(), 1) + "\ndone"
         elif first.is_a(VarlistNode):
-            vars = self.get(VarlistNode)
-            exps = self.get(ExplistNode)
-            ventry = vars[0].children[0]
-            ventry.assign = True
-            eentry = exps[0].children[0]
+            var = self.get_only(VarlistNode)
+            exp = self.get_only(ExplistNode)
+            var.set_recursive('assign', True)
             # TODO: handle RHS cases between
             # - simple expression: $exp
             # - string of multiple components: ""
             # - function output: $()
-            return ventry.gen() + "=\"" + eentry.gen() + '"'  # safe
+            return var.gen() + "=\"" + exp.gen() + '"'  # safe
         elif first.is_a(FunctioncallNode):
             return first.gen()
         else:
@@ -151,14 +145,15 @@ class StatNode(ASTNode):
         vars = self.get(VarlistNode)
         if not vars:
             return []
-        ventry = vars[0].children[0]
-        sym = Symbol(ventry.gen(), "unknown")
+        ventry = vars[0].children[0].children[0]
+        sym = Symbol(ventry.value, "unknown")
         return [sym]
 
     def update_symbols(self):
         self.symbol_table.sequential = True
         syms = self.get_symbols()
         self.symbol_table.insert(syms)
+        super().update_symbols()
 
 
 class PrefixexpNode(ASTNode):
